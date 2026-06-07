@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Dead Concrete — Tops, Caps & Custom Pieces",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "start": "node server.js",
     "setup": "node db/setup.js",

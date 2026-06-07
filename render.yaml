@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: dead-concrete
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run setup
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SECURE
+        value: "true"
+      - key: PORT
+        value: "10000"
+      - key: JWT_SECRET
+        generateValue: true
+      # Fill in via the Render dashboard (Environment tab) — never commit these:
+      - key: SITE_URL
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: MOMO_NAME
+        sync: false
+      - key: MOMO_NUMBER
+        sync: false
+      - key: BANK_NAME
+        sync: false
+      - key: BANK_ACCOUNT_NAME
+        sync: false
+      - key: BANK_ACCOUNT_NUMBER
+        sync: false

@@ -1,0 +1,21 @@
+node_modules/
+
+# Secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+
+# Runtime DB (re-created with `npm run setup` on the host)
+deadconcrete.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Note: uploads/products/ is intentionally NOT ignored —
+# product images live in git so a fresh deploy has stock photos.

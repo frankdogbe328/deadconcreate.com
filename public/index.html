@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dead Concrete — Tops & Caps</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Barlow Condensed',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    ::-webkit-scrollbar{width:5px;background:#111}
+    ::-webkit-scrollbar-thumb{background:#c0392b;border-radius:3px}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+    @keyframes toastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}
+    @keyframes imgFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    @keyframes crackGrow{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+    @keyframes breathe{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.08);opacity:.95}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    @keyframes ringPulse{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+    .fade-up{animation:fadeUp .4s ease forwards}
+    .reveal{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+    .reveal.in{opacity:1;transform:translateY(0)}
+    .reveal.d1{transition-delay:.12s} .reveal.d2{transition-delay:.24s} .reveal.d3{transition-delay:.36s}
+    .marquee{overflow:hidden;background:#0d0d0d;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;padding:18px 0}
+    .marquee-track{display:inline-flex;gap:48px;white-space:nowrap;animation:marquee 30s linear infinite;will-change:transform;align-items:center}
+    .marquee-track span{font-weight:900;font-size:22px;letter-spacing:5px;color:#fff;text-transform:uppercase;display:inline-flex;align-items:center;gap:48px}
+    .marquee-track em{color:#c0392b;font-style:normal;font-size:18px}
+    .shimmer-text{background:linear-gradient(90deg,#c0392b 0%,#fff 25%,#c0392b 50%,#fff 75%,#c0392b 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 7s linear infinite}
+    .float-slow{animation:float 5s ease-in-out infinite}
+    .pc .product-img{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+    .pc:hover .product-img{transform:scale(1.08)}
+    .ring-pulse{position:absolute;border:2px solid #c0392b;border-radius:50%;animation:ringPulse 2.2s ease-out infinite;pointer-events:none}
+    .card{background:#111;border:1px solid #1e1e1e}
+    .btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;border:none;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+    .btn-primary{background:#c0392b;color:#fff;padding:11px 24px}
+    .btn-primary:hover{background:#e74c3c}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+    .btn-outline{background:transparent;color:#fff;border:2px solid #c0392b !important;padding:9px 22px}
+    .btn-outline:hover{background:#c0392b}
+    .btn-ghost{background:transparent;color:#888;padding:8px 14px;border:none}
+    .btn-ghost:hover{color:#fff}
+    .input{width:100%;padding:12px 16px;background:#1a1a1a;border:1.5px solid #2a2a2a;color:#fff;font-size:15px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s}
+    .input:focus{border-color:#c0392b}
+    select.input option{background:#1a1a1a}
+    .label{display:block;font-size:10px;font-weight:800;letter-spacing:2px;color:#666;margin-bottom:6px;text-transform:uppercase}
+    .section-tag{color:#c0392b;font-size:11px;font-weight:800;letter-spacing:4px;text-transform:uppercase;margin-bottom:10px;display:block}
+    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+    .pc{transition:transform .3s,box-shadow .3s}
+    .pc:hover{transform:translateY(-5px);box-shadow:0 16px 48px rgba(192,57,43,.25)}
+    .nav-link{cursor:pointer;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s;padding-bottom:2px}
+    .toast-container{position:fixed;top:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+    .toast{pointer-events:auto;background:#111;border:1px solid #1e1e1e;padding:14px 22px;display:flex;align-items:center;gap:12px;animation:toastIn .3s ease forwards;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+    .toast.removing{animation:toastOut .3s ease forwards}
+    .toast-success{border-left:3px solid #27ae60}
+    .toast-error{border-left:3px solid #e74c3c}
+    .toast-info{border-left:3px solid #3498db}
+    .product-img{width:100%;height:100%;object-fit:cover;animation:imgFadeIn .4s ease}
+    .pay-input{padding:12px 16px;background:#1a1a1a;border:1.5px solid #2a2a2a;min-height:46px;transition:border-color .2s}
+    .hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px}
+    .hamburger span{display:block;width:22px;height:2px;background:#fff;margin:5px 0;transition:all .3s}
+    .nav-links{display:flex;gap:28px}
+    @media(max-width:768px){
+      .hamburger{display:block}
+      .nav-links{display:none;position:absolute;top:64px;left:0;right:0;background:#111;border-bottom:3px solid #c0392b;flex-direction:column;padding:20px;gap:16px;z-index:99}
+      .nav-links.open{display:flex}
+      .nav-actions .btn-primary{padding:7px 12px;font-size:12px}
+    }
+    .co-grid{display:grid;grid-template-columns:1fr 360px;gap:32px;align-items:start}
+    .co-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .co-pay-card{display:flex;gap:16px;align-items:flex-start;padding:18px 20px;border:2px solid #2a2a2a;background:#111;cursor:pointer;transition:all .2s;margin-bottom:12px}
+    .co-pay-card:hover{border-color:#3a3a3a}
+    .co-pay-card.active{border-color:#c0392b;background:#1a0606}
+    .co-pay-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:#1a1a1a;border-radius:6px;flex-shrink:0;font-size:24px}
+    .co-pay-card.active .co-pay-icon{background:#c0392b}
+    .co-net-card{flex:1;padding:14px 8px;border:2px solid #2a2a2a;background:#111;cursor:pointer;text-align:center;transition:all .2s;font-family:'Barlow',sans-serif}
+    .co-net-card:hover{border-color:#3a3a3a}
+    .co-net-card.active{background:#1a1000;border-color:#f7941d}
+    .co-trust{display:flex;gap:14px;justify-content:center;padding:16px 0;border-top:1px solid #1e1e1e;margin-top:18px;flex-wrap:wrap}
+    .co-trust span{color:#555;font-family:'Barlow',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+    .co-thumb{width:50px;height:50px;flex-shrink:0;background:#1a1a1a;overflow:hidden;border-radius:4px}
+    .co-thumb img{width:100%;height:100%;object-fit:cover}
+    @media(max-width:880px){
+      .co-grid{grid-template-columns:1fr}
+      .co-form-grid{grid-template-columns:1fr}
+      .co-summary{position:static !important;order:-1;margin-bottom:16px}
+    }
+    /* Preloader */
+    @keyframes dcGlow{0%,100%{filter:invert(1) drop-shadow(0 0 0 #c0392b)}50%{filter:invert(1) drop-shadow(0 0 18px #c0392b)}}
+    @keyframes dcSlide{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    #dc-preloader{position:fixed;inset:0;background:radial-gradient(circle at 50% 50%,#1a0606 0%,#0a0a0a 70%);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;transition:opacity .6s ease,visibility 0s linear .6s}
+    #dc-preloader.dc-hidden{opacity:0;visibility:hidden}
+    .dc-pre-logo{height:120px;width:auto;mix-blend-mode:screen;animation:dcGlow 2s ease infinite}
+    .dc-pre-bar{width:220px;height:3px;background:#1a1a1a;overflow:hidden;position:relative}
+    .dc-pre-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#c0392b,transparent);animation:dcSlide 1.4s linear infinite}
+    .dc-pre-text{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:11px;letter-spacing:6px;color:#555;text-transform:uppercase}
+    .dc-pre-tag{color:#c0392b;margin-left:6px}
+    /* Responsive helpers */
+    .resp-2col,.resp-3col,.resp-stack{}
+    .track-step-label{font-size:9px}
+    @media(max-width:880px){
+      .resp-2col{grid-template-columns:1fr !important;gap:24px !important}
+      .resp-stack{flex-direction:column !important;align-items:stretch !important;gap:14px !important}
+      .resp-pad{padding:24px !important}
+      .resp-pad-x{padding-left:18px !important;padding-right:18px !important}
+      .resp-section{padding:48px 18px !important}
+      .resp-h1{font-size:42px !important;letter-spacing:-1px !important;line-height:1 !important}
+      .resp-h2{font-size:32px !important;letter-spacing:-1px !important}
+      .resp-quote-h1{font-size:48px !important;letter-spacing:-1px !important;line-height:.95 !important}
+      .resp-stat-num{font-size:28px !important}
+      .resp-stat-lbl{font-size:9px !important;letter-spacing:2px !important}
+    }
+    @media(max-width:560px){
+      .resp-h1{font-size:34px !important}
+      .resp-h2{font-size:26px !important}
+      .resp-quote-h1{font-size:40px !important}
+      .resp-3col{grid-template-columns:1fr !important;gap:14px !important}
+      .resp-stat-num{font-size:32px !important}
+      .track-step-label{display:none}
+      .resp-section{padding:40px 16px !important}
+      .resp-modal{padding:24px !important;width:96vw !important;max-height:92vh !important}
+      .resp-account-h1{font-size:36px !important}
+    }
+  </style>
+</head>
+<body>
+<div id="dc-preloader" role="status" aria-label="Loading Dead Concrete">
+  <img src="/logo.png" class="dc-pre-logo" alt="" />
+  <div class="dc-pre-bar"></div>
+  <div class="dc-pre-text">Built Raw<span class="dc-pre-tag">·</span> Built Hard</div>
+</div>
+<script>
+  // Safety net: if React fails to boot within 8s, hide the preloader anyway
+  setTimeout(function(){ var p = document.getElementById('dc-preloader'); if (p) p.classList.add('dc-hidden'); }, 8000);
+</script>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const API = '/api';
+
+// ── STATE MANAGEMENT (simple, no Redux) ───────────────────────────────────────
+function useLocalStorage(key, def) {
+  const [v, setV] = React.useState(() => { try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; } });
+  const set = val => { setV(val); try { if (val === null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(val)); } catch {} };
+  return [v, set];
+}
+
+function useApi() {
+  const token = localStorage.getItem('dc_token');
+  const req = async (method, path, body) => {
+    const res = await fetch(`${API}${path}`, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  };
+  return { get: p => req('GET', p), post: (p,b) => req('POST', p, b), put: (p,b) => req('PUT', p, b), patch: (p,b) => req('PATCH', p, b), del: p => req('DELETE', p) };
+}
+
+// ── SCROLL-REVEAL + COUNT-UP HOOKS ────────────────────────────────────────────
+function useReveal(deps=[]) {
+  React.useEffect(() => {
+    const els = document.querySelectorAll('.reveal:not(.in)');
+    if (!els.length) return;
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, deps);
+}
+function useCountUp(target, dur = 1600) {
+  const [v, setV] = React.useState(0);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const io = new IntersectionObserver(es => {
+      if (es[0].isIntersecting) {
+        const start = performance.now();
+        const tick = t => { const p = Math.min(1,(t-start)/dur); setV(Math.floor(target*p)); if (p<1) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+        io.disconnect();
+      }
+    }, { threshold: .4 });
+    io.observe(ref.current);
+    return () => io.disconnect();
+  }, [target]);
+  return [v, ref];
+}
+
+// ── MARQUEE STRIP ─────────────────────────────────────────────────────────────
+function Marquee() {
+  const items = ['DEAD CONCRETE','BUILT RAW · BUILT HARD','RISE FROM THE CRACKS','STRENGTH · SURVIVAL · SHINE','STREET-BORN STREETWEAR'];
+  const row = items.map((t,i) => <span key={'a'+i}>{t} <em>✦</em></span>);
+  const row2 = items.map((t,i) => <span key={'b'+i}>{t} <em>✦</em></span>);
+  return <div className="marquee" aria-hidden="true"><div className="marquee-track">{row}{row2}</div></div>;
+}
+
+// ── SPINNER ───────────────────────────────────────────────────────────────────
+const Spin = () => <div className="spinner" />;
+
+// ── TOAST SYSTEM ──────────────────────────────────────────────────────────────
+const ToastContext = React.createContext();
+function useToast() { return React.useContext(ToastContext); }
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = React.useState([]);
+  const add = (msg, type='success') => {
+    const id = Date.now() + Math.random();
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts(t => t.map(x => x.id===id ? {...x, removing:true} : x)), 2800);
+    setTimeout(() => setToasts(t => t.filter(x => x.id!==id)), 3100);
+  };
+  return <ToastContext.Provider value={add}>{children}
+    <div className="toast-container">{toasts.map(t => <div key={t.id} className={`toast toast-${t.type}${t.removing?' removing':''}`}><span style={{fontSize:16}}>{t.type==='success'?'✓':t.type==='error'?'✕':'ℹ'}</span><span style={{fontFamily:'Barlow',fontSize:14,color:'#ccc'}}>{t.msg}</span></div>)}</div>
+  </ToastContext.Provider>;
+}
+
+// ── PRODUCT IMAGE ─────────────────────────────────────────────────────────────
+function ProductImage({ src, alt, size=64, style={} }) {
+  if (src) return <img src={src} alt={alt||'Product'} className="product-img" style={style} onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} />;
+  return <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:size,background:'linear-gradient(135deg,#1a1a1a,#c0392b22)',...style}}>🧱</div>;
+}
+
+// ── STARS ─────────────────────────────────────────────────────────────────────
+function Stars({ rating, size=18, interactive=false, onRate }) {
+  const [hover, setHover] = React.useState(0);
+  return <div style={{display:'flex',gap:2}}>{[1,2,3,4,5].map(n => <span key={n} onClick={()=>interactive&&onRate(n)} onMouseEnter={()=>interactive&&setHover(n)} onMouseLeave={()=>interactive&&setHover(0)} style={{fontSize:size,cursor:interactive?'pointer':'default',color:n<=(hover||rating)?'#f39c12':'#333',transition:'color .15s'}}>★</span>)}</div>;
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App() {
+  React.useEffect(() => {
+    const pl = document.getElementById('dc-preloader');
+    if (!pl) return;
+    // Brief minimum show time so it doesn't flash, then fade out
+    const t = setTimeout(() => {
+      pl.classList.add('dc-hidden');
+      setTimeout(() => pl.remove(), 700);
+    }, 600);
+    return () => clearTimeout(t);
+  }, []);
+
+  const [page, setPage] = React.useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('reset') ? 'reset' : 'home';
+  });
+  const [user, setUser] = useLocalStorage('dc_user', null);
+  const [token, setToken] = useLocalStorage('dc_token', null);
+  const [cart, setCart] = useLocalStorage('dc_cart', []);
+  const [cartOpen, setCartOpen] = React.useState(false);
+  const [pageData, setPageData] = React.useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reset = params.get('reset');
+    return reset ? { resetToken: reset } : {};
+  });
+
+  const nav = (p, data={}) => { setPage(p); setPageData(data); setCartOpen(false); window.scrollTo(0,0); };
+  const cartCount = cart.reduce((s,i) => s+i.qty, 0);
+  const cartTotal = cart.reduce((s,i) => s+i.price*i.qty, 0);
+
+  const addToCart = (p, toast) => {
+    setCart(prev => { const ex = prev.find(i=>i.id===p.id); return ex ? prev.map(i=>i.id===p.id?{...i,qty:i.qty+1}:i) : [...prev,{...p,qty:1}]; });
+    if (toast) toast(`${p.name} added to cart`);
+  };
+  const updateQty = (id, d) => setCart(prev => prev.map(i=>i.id===id?{...i,qty:Math.max(0,i.qty+d)}:i).filter(i=>i.qty>0));
+  const clearCart = () => setCart([]);
+  const logout = () => { setUser(null); setToken(null); nav('home'); };
+
+  const ctx = { user, setUser, token, setToken, cart, cartTotal, cartCount, addToCart, updateQty, clearCart, setCartOpen, nav, logout, pageData };
+
+  return (
+    <ToastProvider>
+    <div>
+      <Nav {...ctx} cartOpen={cartOpen} page={page} />
+      {cartOpen && <CartDrawer cart={cart} total={cartTotal} updateQty={updateQty} onClose={()=>setCartOpen(false)} onCheckout={()=>{setCartOpen(false);nav('checkout');}} />}
+      <main>
+        {page==='home'    && <HomePage {...ctx} />}
+        {page==='shop'    && <ShopPage {...ctx} />}
+        {page==='checkout'&& <CheckoutPage {...ctx} />}
+        {page==='track'   && <TrackPage {...ctx} />}
+        {page==='account' && <AccountPage {...ctx} />}
+        {page==='reset'   && <ResetPasswordPage {...ctx} />}
+        {page==='contact' && <ContactPage {...ctx} />}
+        {page==='admin'   && <AdminPage {...ctx} />}
+      </main>
+      <footer style={{background:'#111',borderTop:'2px solid #1a1a1a',padding:'60px 20px 40px',marginTop:80}}>
+        <div style={{maxWidth:1200,margin:'0 auto',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:40,marginBottom:40}}>
+          <div>
+            <img src="/logo.png" alt="Dead Concrete" style={{height:64,width:'auto',display:'block',filter:'invert(1)',mixBlendMode:'screen',marginBottom:14}} />
+            <div style={{color:'#555',fontSize:11,letterSpacing:3}}>RESURRECTION · STAND TOPS</div>
+            <p style={{color:'#444',fontFamily:'Barlow',fontSize:13,lineHeight:1.7,marginTop:14}}>Street-born streetwear. Built raw. Built hard. Rise from the cracks.</p>
+          </div>
+          <div>
+            <div style={{fontWeight:800,fontSize:12,letterSpacing:2,marginBottom:16,color:'#666'}}>SHOP</div>
+            {[['shop','All Products'],['shop','Concrete Tops'],['shop','Post Caps'],['shop','Custom Pieces']].map(([p,l],i)=><div key={i} onClick={()=>nav(p)} style={{color:'#555',fontFamily:'Barlow',fontSize:14,marginBottom:10,cursor:'pointer',transition:'color .2s'}} onMouseEnter={e=>e.target.style.color='#fff'} onMouseLeave={e=>e.target.style.color='#555'}>{l}</div>)}
+          </div>
+          <div>
+            <div style={{fontWeight:800,fontSize:12,letterSpacing:2,marginBottom:16,color:'#666'}}>SUPPORT</div>
+            {[['track','Track Order'],['contact','Get a Quote'],['account','My Account']].map(([p,l])=><div key={p} onClick={()=>nav(p)} style={{color:'#555',fontFamily:'Barlow',fontSize:14,marginBottom:10,cursor:'pointer',transition:'color .2s'}} onMouseEnter={e=>e.target.style.color='#fff'} onMouseLeave={e=>e.target.style.color='#555'}>{l}</div>)}
+          </div>
+          <div>
+            <div style={{fontWeight:800,fontSize:12,letterSpacing:2,marginBottom:16,color:'#666'}}>CONTACT</div>
+            <div style={{color:'#555',fontFamily:'Barlow',fontSize:14,lineHeight:1.8}}>
+              <a href="mailto:order.deadconcrete12@gmail.com" style={{color:'#888',textDecoration:'none',display:'block'}}>📧 order.deadconcrete12@gmail.com</a>
+              <a href="https://wa.me/233257440091" target="_blank" rel="noopener" style={{color:'#888',textDecoration:'none',display:'block'}}>💬 WhatsApp 0257 440 091</a>
+              <div>📍 Accra, Ghana</div>
+            </div>
+          </div>
+        </div>
+        <div style={{borderTop:'1px solid #1a1a1a',paddingTop:24,textAlign:'center',color:'#333',fontSize:11,letterSpacing:2}}>© 2026 Dead Concrete. All rights reserved.</div>
+      </footer>
+    </div>
+    </ToastProvider>
+  );
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function Nav({ user, nav, page, cartCount, setCartOpen, cartOpen, logout }) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const links = [['home','Home'],['shop','Shop'],['track','Track Order'],['contact','Get a Quote']];
+  if (user?.role==='admin') links.push(['admin','Admin']);
+
+  return (
+    <nav style={{background:'#111',borderBottom:'3px solid #c0392b',position:'sticky',top:0,zIndex:100}}>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:64,position:'relative'}}>
+        <div onClick={()=>nav('home')} style={{cursor:'pointer',display:'flex',alignItems:'center'}}>
+          <img src="/logo.png" alt="Dead Concrete" style={{height:44,width:'auto',display:'block',filter:'invert(1)',mixBlendMode:'screen'}} />
+        </div>
+        <button className="hamburger" onClick={()=>setMenuOpen(o=>!o)} aria-label="Menu">
+          <span style={{transform:menuOpen?'rotate(45deg) translate(5px,5px)':'none'}} /><span style={{opacity:menuOpen?0:1}} /><span style={{transform:menuOpen?'rotate(-45deg) translate(5px,-5px)':'none'}} />
+        </button>
+        <div className={`nav-links${menuOpen?' open':''}`}>
+          {links.map(([p,l]) => <span key={p} className="nav-link" onClick={()=>{nav(p);setMenuOpen(false);}} style={{color:page===p?'#fff':'#666',borderBottom:page===p?'2px solid #c0392b':'2px solid transparent'}}>{l}</span>)}
+        </div>
+        <div className="nav-actions" style={{display:'flex',gap:10,alignItems:'center'}}>
+          <button className="btn btn-outline" style={{padding:'7px 14px',position:'relative'}} onClick={()=>setCartOpen(o=>!o)}>
+            🛒 {cartCount>0&&<span style={{position:'absolute',top:-8,right:-8,background:'#c0392b',borderRadius:'50%',width:20,height:20,fontSize:11,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center',animation:'pulse .5s ease 1'}}>{cartCount}</span>}
+          </button>
+          {user
+            ? <><button className="btn btn-ghost" onClick={()=>nav('account')}>{user.name.split(' ')[0]}</button><button className="btn btn-outline" style={{padding:'7px 14px'}} onClick={logout}>↩</button></>
+            : <button className="btn btn-primary" onClick={()=>nav('account')}>Sign In</button>
+          }
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// ── CART DRAWER ───────────────────────────────────────────────────────────────
+function CartDrawer({ cart, total, updateQty, onClose, onCheckout }) {
+  return (
+    <>
+      <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',zIndex:200}} />
+      <div style={{position:'fixed',top:0,right:0,width:400,maxWidth:'100vw',height:'100vh',background:'#111',borderLeft:'3px solid #c0392b',zIndex:201,display:'flex',flexDirection:'column',animation:'slideIn .3s ease'}}>
+        <div style={{padding:'22px 24px 18px',borderBottom:'1px solid #1e1e1e',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <h2 style={{fontWeight:900,fontSize:22,letterSpacing:1}}>CART ({cart.length})</h2>
+          <button className="btn btn-ghost" onClick={onClose} style={{fontSize:20}}>✕</button>
+        </div>
+        <div style={{flex:1,overflowY:'auto',padding:24}}>
+          {cart.length===0
+            ? <div style={{textAlign:'center',color:'#444',paddingTop:80}}><div style={{fontSize:48}}>🧱</div><p style={{fontFamily:'Barlow',marginTop:16}}>Your cart is empty.</p></div>
+            : cart.map(item => (
+              <div key={item.id} style={{display:'flex',gap:14,marginBottom:20,paddingBottom:20,borderBottom:'1px solid #1a1a1a'}}>
+                <div style={{width:60,height:60,flexShrink:0,overflow:'hidden',background:`${item.accent_color||'#c0392b'}22`}}>{item.image_url?<img src={item.image_url} alt={item.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />:<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28}}>🧱</div>}</div>
+                <div style={{flex:1}}><div style={{fontWeight:800,fontSize:15,marginBottom:3}}>{item.name}</div><div style={{color:'#c0392b',fontWeight:800}}>GHS {item.price}</div></div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <button onClick={()=>updateQty(item.id,-1)} style={{width:28,height:28,background:'#1a1a1a',border:'1px solid #333',color:'#fff',cursor:'pointer',fontSize:16}}>−</button>
+                  <span style={{fontWeight:800,width:20,textAlign:'center'}}>{item.qty}</span>
+                  <button onClick={()=>updateQty(item.id,1)} style={{width:28,height:28,background:'#1a1a1a',border:'1px solid #333',color:'#fff',cursor:'pointer',fontSize:16}}>+</button>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        {cart.length>0&&<div style={{padding:24,borderTop:'1px solid #1e1e1e'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}>
+            <span style={{fontWeight:700,fontSize:15}}>TOTAL</span>
+            <span style={{fontWeight:900,fontSize:26,color:'#c0392b'}}>GHS {total.toFixed(2)}</span>
+          </div>
+          <button className="btn btn-primary" style={{width:'100%',padding:'16px',fontSize:17}} onClick={onCheckout}>CHECKOUT</button>
+        </div>}
+      </div>
+    </>
+  );
+}
+
+// ── HOME PAGE ─────────────────────────────────────────────────────────────────
+function HomePage({ nav, addToCart }) {
+  const [featured, setFeatured] = React.useState([]);
+  const api = useApi();
+  React.useEffect(() => { api.get('/products').then(p => setFeatured(p.filter(x=>x.badge).slice(0,3))).catch(()=>{}); }, []);
+  useReveal([featured.length]);
+  const [n1, r1] = useCountUp(1200);
+  const [n2, r2] = useCountUp(100);
+  const [n3, r3] = useCountUp(48);
+
+  return (
+    <div>
+      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
+      <section style={{background:'linear-gradient(135deg,#0a0a0a 0%,#180808 50%,#0a0a0a 100%)',minHeight:'88vh',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden',padding:'60px 20px'}}>
+        <div style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px),repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px)'}} />
+        <div style={{position:'absolute',width:700,height:700,background:'radial-gradient(circle,rgba(192,57,43,.1) 0%,transparent 70%)',top:'50%',left:'50%',transform:'translate(-50%,-50%)',animation:'breathe 6s ease-in-out infinite'}} />
+        <div style={{textAlign:'center',position:'relative',zIndex:2,maxWidth:920}} className="fade-up">
+          <div style={{display:'inline-block',background:'#c0392b',padding:'4px 18px',fontSize:10,fontWeight:900,letterSpacing:5,marginBottom:28}}>STREET-BORN · HAND-PRINTED</div>
+          <h1 style={{fontWeight:900,fontSize:'clamp(52px,11vw,115px)',lineHeight:.88,letterSpacing:-3,textTransform:'uppercase',marginBottom:28}}>BUILT<br/><span style={{color:'#c0392b',WebkitTextStroke:'2px #c0392b',WebkitTextFillColor:'transparent'}}>RAW.</span><br/>BUILT HARD.</h1>
+          <p style={{color:'#777',fontSize:18,fontFamily:'Barlow',maxWidth:520,margin:'0 auto 44px',lineHeight:1.7}}>Streetwear forged from the cracks. Heavyweight tees, raglan crops, hand-printed. No shortcuts.</p>
+          <div style={{display:'flex',gap:16,justifyContent:'center',flexWrap:'wrap'}}>
+            <button className="btn btn-primary" style={{fontSize:17,padding:'17px 44px'}} onClick={()=>nav('shop')}>SHOP NOW</button>
+            <button className="btn btn-outline" style={{fontSize:17,padding:'17px 44px'}} onClick={()=>nav('track')}>TRACK ORDER</button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── MARQUEE STRIP ─────────────────────────────────────────────────────── */}
+      <Marquee />
+
+      {/* ── STATS (animated count-up) ────────────────────────────────────────── */}
+      <section style={{background:'#c0392b',padding:'34px 20px'}}>
+        <div className="resp-3col" style={{maxWidth:800,margin:'0 auto',display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,textAlign:'center'}}>
+          <div ref={r1}><div className="resp-stat-num" style={{fontWeight:900,fontSize:42,lineHeight:1}}>{n1.toLocaleString()}+</div><div className="resp-stat-lbl" style={{fontSize:11,letterSpacing:3,opacity:.85,marginTop:4,fontFamily:'Barlow'}}>Pieces Shipped</div></div>
+          <div ref={r2}><div className="resp-stat-num" style={{fontWeight:900,fontSize:42,lineHeight:1}}>{n2}%</div><div className="resp-stat-lbl" style={{fontSize:11,letterSpacing:3,opacity:.85,marginTop:4,fontFamily:'Barlow'}}>Hand-Printed</div></div>
+          <div ref={r3}><div className="resp-stat-num" style={{fontWeight:900,fontSize:42,lineHeight:1}}>{n3}hr</div><div className="resp-stat-lbl" style={{fontSize:11,letterSpacing:3,opacity:.85,marginTop:4,fontFamily:'Barlow'}}>Dispatch</div></div>
+        </div>
+      </section>
+
+      {/* ── MANIFESTO ────────────────────────────────────────────────────────── */}
+      <section style={{background:'#0a0a0a',padding:'120px 20px',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(circle at 25% 60%,rgba(192,57,43,.10),transparent 55%)',pointerEvents:'none'}} />
+        <div style={{maxWidth:1140,margin:'0 auto',display:'grid',gridTemplateColumns:'1.1fr 1fr',gap:60,alignItems:'center',position:'relative'}}>
+          <div className="reveal">
+            <span className="section-tag">THE MANIFESTO</span>
+            <h2 style={{fontWeight:900,fontSize:'clamp(40px,5.5vw,68px)',letterSpacing:-2,lineHeight:.95,marginBottom:28}}>MORE THAN A NAME — <span className="shimmer-text">A MINDSET.</span></h2>
+            <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:18}}>Concrete is the hardest surface we know. Even when it looks dead or broken, it still stands. Dead Concrete represents <strong style={{color:'#fff'}}>strength, survival, and growth through struggle.</strong></p>
+            <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:32}}>Just like plants break through concrete, greatness rises from the hardest places. This is for those who come from the streets, face the pressure, and still find a way to <em style={{color:'#c0392b',fontStyle:'normal',fontWeight:800}}>shine</em>.</p>
+            <div style={{borderLeft:'3px solid #c0392b',paddingLeft:20}}>
+              <div style={{color:'#888',fontFamily:'Barlow',fontSize:12,letterSpacing:3,textTransform:'uppercase',marginBottom:6}}>— FOUNDER'S NOTE</div>
+              <div style={{fontWeight:800,fontSize:18,color:'#fff',lineHeight:1.5}}>"Greatness rises from the hardest places."</div>
+            </div>
+          </div>
+          <div className="reveal d2" style={{position:'relative',height:480,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div style={{position:'absolute',width:280,height:280,top:'30%',left:'50%',transform:'translate(-50%,-50%)'}}>
+              <div className="ring-pulse" style={{inset:0}} />
+              <div className="ring-pulse" style={{inset:0,animationDelay:'1.1s'}} />
+            </div>
+            <svg viewBox="0 0 300 460" style={{width:'100%',height:'100%',maxWidth:360,position:'relative',zIndex:1}}>
+              <defs>
+                <linearGradient id="cg" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stopColor="#1a1a1a"/>
+                  <stop offset="1" stopColor="#070707"/>
+                </linearGradient>
+                <radialGradient id="glow" cx=".5" cy=".5">
+                  <stop offset="0" stopColor="#c0392b" stopOpacity=".6"/>
+                  <stop offset="1" stopColor="#c0392b" stopOpacity="0"/>
+                </radialGradient>
+              </defs>
+              <circle cx="150" cy="270" r="110" fill="url(#glow)" style={{animation:'breathe 4s ease-in-out infinite'}}/>
+              <rect x="10" y="270" width="280" height="180" fill="url(#cg)" stroke="#222" strokeWidth="2"/>
+              <path d="M150 270 L148 305 L158 340 L142 380 L162 420 L148 450" stroke="#c0392b" strokeWidth="2.5" fill="none" strokeDasharray="600" style={{animation:'crackGrow 2.4s ease forwards'}}/>
+              <path d="M150 305 L118 330 L108 380 L120 430" stroke="#8b1f15" strokeWidth="1.6" fill="none" strokeDasharray="600" style={{animation:'crackGrow 2.4s .3s ease forwards'}}/>
+              <path d="M158 340 L195 360 L210 410" stroke="#8b1f15" strokeWidth="1.6" fill="none" strokeDasharray="600" style={{animation:'crackGrow 2.4s .55s ease forwards'}}/>
+              <g className="float-slow">
+                <path d="M150 270 Q150 200 144 140 Q138 105 132 80" stroke="#27ae60" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+                <ellipse cx="130" cy="78" rx="14" ry="22" fill="#27ae60" transform="rotate(-25 130 78)"/>
+                <ellipse cx="160" cy="105" rx="13" ry="19" fill="#1e8449" transform="rotate(25 160 105)"/>
+                <ellipse cx="146" cy="50" rx="11" ry="17" fill="#2ecc71" transform="rotate(5 146 50)"/>
+                <ellipse cx="120" cy="125" rx="11" ry="16" fill="#1e8449" transform="rotate(-40 120 125)"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURED PRODUCTS ────────────────────────────────────────────────── */}
+      {featured.length>0&&<section style={{maxWidth:1200,margin:'0 auto',padding:'80px 20px'}}>
+        <div className="reveal" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:48,flexWrap:'wrap',gap:16}}>
+          <div><span className="section-tag">FEATURED DROPS</span><h2 style={{fontWeight:900,fontSize:48,letterSpacing:-1,lineHeight:1}}>FRESH OFF THE PRESS</h2></div>
+          <button className="btn btn-outline" onClick={()=>nav('shop')}>VIEW ALL</button>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:24}}>
+          {featured.map((p,i)=><div key={p.id} className={`reveal d${(i%3)+1}`}><ProductCard product={p} onAdd={()=>addToCart(p)} onView={()=>nav('shop')} /></div>)}
+        </div>
+      </section>}
+
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────────────── */}
+      <section style={{background:'#0d0d0d',padding:'80px 20px',borderTop:'1px solid #1a1a1a'}}>
+        <div style={{maxWidth:1000,margin:'0 auto'}}>
+          <div className="reveal" style={{textAlign:'center',marginBottom:60}}><span className="section-tag">HOW IT WORKS</span><h2 style={{fontWeight:900,fontSize:48,letterSpacing:-1}}>FROM ORDER TO DOOR</h2></div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:36}}>
+            {[['01','Order Online','Pick your piece and checkout securely.'],['02','We Print It','Hand-screened in our Accra studio within 48 hours.'],['03','Quality Check','Every tee inspected before it ships.'],['04','Track & Receive','Real-time tracking from rack to door.']].map(([n,t,d],i)=><div key={n} className={`reveal d${i%3+1}`} style={{borderTop:'3px solid #c0392b',paddingTop:22}}><div style={{fontWeight:900,fontSize:48,color:'#c0392b',lineHeight:1,marginBottom:10}}>{n}</div><div style={{fontWeight:800,fontSize:18,marginBottom:8}}>{t}</div><div style={{color:'#666',fontSize:14,fontFamily:'Barlow',lineHeight:1.6}}>{d}</div></div>)}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ── PRODUCT CARD ──────────────────────────────────────────────────────────────
+function ProductCard({ product: p, onAdd, onView }) {
+  const c = p.accent_color||'#c0392b';
+  return (
+    <div className="pc card" style={{overflow:'hidden'}}>
+      <div style={{height:200,background:`linear-gradient(135deg,#1a1a1a,${c}22)`,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',borderBottom:`3px solid ${c}`,cursor:'pointer',overflow:'hidden'}} onClick={onView}>
+        {p.image_url
+          ? <img src={p.image_url} alt={p.name} className="product-img" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} />
+          : <div style={{fontSize:64}}>🧱</div>
+        }
+        {p.badge&&<span style={{position:'absolute',top:12,left:12,background:c,padding:'3px 10px',fontSize:9,fontWeight:900,letterSpacing:1.5,zIndex:1}}>{p.badge}</span>}
+        <span style={{position:'absolute',top:12,right:12,background:'rgba(10,10,10,.85)',padding:'4px 12px',fontWeight:900,fontSize:15,zIndex:1}}>GHS {p.price}</span>
+      </div>
+      <div style={{padding:24}}>
+        <div style={{fontSize:10,color:'#555',letterSpacing:3,textTransform:'uppercase',marginBottom:6}}>{p.category}</div>
+        <h3 style={{fontWeight:900,fontSize:22,marginBottom:10}}>{p.name}</h3>
+        <p style={{color:'#666',fontSize:14,fontFamily:'Barlow',lineHeight:1.5,marginBottom:20}}>{p.description}</p>
+        <button className="btn btn-primary" style={{width:'100%',padding:'13px'}} onClick={onAdd}>ADD TO CART</button>
+      </div>
+    </div>
+  );
+}
+
+// ── SHOP PAGE ─────────────────────────────────────────────────────────────────
+function ShopPage({ addToCart }) {
+  const [products, setProducts] = React.useState([]);
+  const [filter, setFilter] = React.useState('all');
+  const [loading, setLoading] = React.useState(true);
+  const [selected, setSelected] = React.useState(null);
+  const api = useApi();
+
+  React.useEffect(() => {
+    setLoading(true);
+    api.get(`/products${filter!=='all'?`?category=${filter}`:''}`)
+      .then(setProducts).catch(()=>{}).finally(()=>setLoading(false));
+  }, [filter]);
+
+  return (
+    <div style={{maxWidth:1200,margin:'0 auto',padding:'60px 20px'}}>
+      <span className="section-tag">OUR CATALOGUE</span>
+      <h1 className="resp-h1" style={{fontWeight:900,fontSize:64,letterSpacing:-2,lineHeight:1,marginBottom:48}}>ALL PRODUCTS</h1>
+      <div style={{display:'flex',gap:8,marginBottom:48,flexWrap:'wrap'}}>
+        {[['all','ALL'],['resurrection','RESURRECTION'],['tops','STAND TOPS']].map(([f,label])=><button key={f} onClick={()=>setFilter(f)} className="btn" style={{padding:'10px 24px',background:filter===f?'#c0392b':'transparent',color:'#fff',border:`2px solid ${filter===f?'#c0392b':'#333'}`}}>{label}</button>)}
+      </div>
+      {loading ? <div style={{textAlign:'center',padding:'80px 0'}}><div className="spinner" style={{margin:'0 auto',width:40,height:40,borderWidth:3}} /></div>
+        : <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:24}}>
+            {products.map(p=><ProductCard key={p.id} product={p} onAdd={()=>addToCart(p)} onView={()=>setSelected(p)} />)}
+          </div>}
+      {selected&&(
+        <>
+          <div onClick={()=>setSelected(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:300}} />
+          <div className="resp-modal" style={{position:'fixed',top:'5vh',left:'50%',transform:'translateX(-50%)',width:'90vw',maxWidth:700,maxHeight:'90vh',overflowY:'auto',background:'#111',border:'1px solid #1e1e1e',zIndex:301,padding:40}}>
+            <button onClick={()=>setSelected(null)} className="btn btn-ghost" style={{position:'absolute',top:16,right:16,fontSize:20}}>✕</button>
+            <div className="resp-2col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:32,marginBottom:32}}>
+              <div style={{background:`${selected.accent_color||'#c0392b'}15`,borderBottom:`3px solid ${selected.accent_color||'#c0392b'}`,display:'flex',alignItems:'center',justifyContent:'center',minHeight:240,fontSize:80,overflow:'hidden',position:'relative'}}>
+                {selected.image_url ? <img src={selected.image_url} alt={selected.name} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} /> : '🧱'}
+              </div>
+              <div>
+                <div style={{fontSize:10,color:'#555',letterSpacing:3,textTransform:'uppercase',marginBottom:6}}>{selected.category}</div>
+                <h2 style={{fontWeight:900,fontSize:30,marginBottom:12,lineHeight:1}}>{selected.name}</h2>
+                <div style={{fontWeight:900,fontSize:34,color:'#c0392b',marginBottom:16}}>GHS {selected.price}</div>
+                <p style={{color:'#777',fontFamily:'Barlow',lineHeight:1.7,marginBottom:28,fontSize:15}}>{selected.description}</p>
+                <button className="btn btn-primary" style={{width:'100%',padding:'14px',fontSize:16}} onClick={()=>{addToCart(selected);setSelected(null);}}>ADD TO CART</button>
+              </div>
+            </div>
+            <ReviewsSection productId={selected.id} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── REVIEWS SECTION ───────────────────────────────────────────────────────────
+function ReviewsSection({ productId }) {
+  const [data, setData] = React.useState({reviews:[],avgRating:0,totalReviews:0});
+  const [showForm, setShowForm] = React.useState(false);
+  const [form, setForm] = React.useState({rating:0,title:'',body:''});
+  const [loading, setLoading] = React.useState(true);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const api = useApi();
+  const token = localStorage.getItem('dc_token');
+
+  React.useEffect(() => { api.get(`/reviews?productId=${productId}`).then(setData).catch(()=>{}).finally(()=>setLoading(false)); }, [productId]);
+
+  const submit = async () => {
+    if (!form.rating) { setError('Pick a star rating'); return; }
+    setSubmitting(true); setError('');
+    try { await api.post('/reviews', {productId,...form}); setSubmitted(true); setShowForm(false); }
+    catch(e) { setError(e.message); }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <div style={{marginTop:40,paddingTop:32,borderTop:'2px solid #1a1a1a'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:28,flexWrap:'wrap',gap:12}}>
+        <div>
+          <span className="section-tag">REVIEWS</span>
+          <div style={{display:'flex',alignItems:'baseline',gap:12}}>
+            <span style={{fontWeight:900,fontSize:44,lineHeight:1}}>{data.avgRating||'—'}</span>
+            <div><Stars rating={Math.round(data.avgRating)} size={18} /><div style={{color:'#555',fontFamily:'Barlow',fontSize:12,marginTop:3}}>{data.totalReviews} review{data.totalReviews!==1?'s':''}</div></div>
+          </div>
+        </div>
+        {token&&!submitted&&<button className="btn btn-outline" onClick={()=>setShowForm(f=>!f)}>{showForm?'CANCEL':'+ WRITE REVIEW'}</button>}
+        {!token&&<p style={{color:'#555',fontFamily:'Barlow',fontSize:13}}>Sign in to leave a review</p>}
+      </div>
+      {showForm&&<div className="card fade-up" style={{padding:28,marginBottom:24}}>
+        <div style={{marginBottom:14}}><label className="label">Rating *</label><Stars rating={form.rating} size={26} interactive onRate={r=>setForm(f=>({...f,rating:r}))} /></div>
+        <div style={{marginBottom:14}}><label className="label">Title</label><input className="input" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="Sum it up..." /></div>
+        <div style={{marginBottom:14}}><label className="label">Review</label><textarea className="input" rows={3} value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))} placeholder="What did you think?" style={{resize:'vertical'}} /></div>
+        {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:13,marginBottom:12}}>{error}</p>}
+        <button className="btn btn-primary" style={{padding:'11px 28px'}} onClick={submit} disabled={submitting}>{submitting?<Spin/>:'SUBMIT'}</button>
+      </div>}
+      {submitted&&<div style={{background:'#0a1a0f',border:'1px solid #27ae60',padding:'12px 18px',marginBottom:20,color:'#27ae60',fontFamily:'Barlow',fontSize:14}}>✓ Review submitted — pending approval.</div>}
+      {loading?<div style={{textAlign:'center',padding:32}}><Spin/></div>
+        :data.reviews.length===0?<p style={{color:'#444',fontFamily:'Barlow',fontSize:14}}>No reviews yet.</p>
+        :data.reviews.map(r=>(
+          <div key={r.id} className="card" style={{padding:22,marginBottom:14}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,flexWrap:'wrap',gap:8}}>
+              <div><Stars rating={r.rating} size={15}/>{r.title&&<div style={{fontWeight:800,fontSize:16,marginTop:5}}>{r.title}</div>}</div>
+              <div style={{textAlign:'right'}}><div style={{fontWeight:700,fontSize:13}}>{r.reviewer_name}</div><div style={{color:'#444',fontSize:11,fontFamily:'Barlow'}}>{r.created_at?.slice(0,10)}</div></div>
+            </div>
+            {r.body&&<p style={{color:'#888',fontFamily:'Barlow',fontSize:14,lineHeight:1.7,margin:0}}>{r.body}</p>}
+          </div>
+        ))
+      }
+    </div>
+  );
+}
+
+// ── CHECKOUT PAGE ─────────────────────────────────────────────────────────────
+function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
+  const [step, setStep] = React.useState(1);
+  const [orderId, setOrderId] = React.useState(null);
+  const [payStatus, setPayStatus] = React.useState(''); // 'momo_pending' | 'bank_pending' | 'confirmed'
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [shipping, setShipping] = React.useState({name:user?.name||'',email:user?.email||'',phone:'',address:'',city:'',zip:''});
+  const [payMethod, setPayMethod] = React.useState('momo');
+  const [momoPhone, setMomoPhone] = React.useState('');
+  const [momoNetwork, setMomoNetwork] = React.useState('mtn');
+  const [momoDisplayText, setMomoDisplayText] = React.useState('');
+  const [config, setConfig] = React.useState(null);
+  const pollRef = React.useRef(null);
+  const api = useApi();
+
+  React.useEffect(() => {
+    fetch('/api/config').then(r => r.json()).then(cfg => setConfig(cfg)).catch(() => {});
+  }, []);
+
+  React.useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
+
+  const startPolling = (reference) => {
+    pollRef.current = setInterval(async () => {
+      try {
+        const { status } = await api.get(`/payments/verify/${reference}`);
+        if (status === 'success') { clearInterval(pollRef.current); setPayStatus('confirmed'); }
+      } catch {}
+    }, 5000);
+  };
+
+  const placeOrder = async () => {
+    setLoading(true); setError('');
+    try {
+      if (payMethod === 'momo') {
+        if (!momoPhone.trim()) { setError('Enter your MoMo phone number.'); return; }
+        const { orderId: oid, reference, displayText } = await api.post('/payments/momo', {
+          items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
+          shipping, guestEmail: shipping.email,
+          phone: momoPhone.trim(), provider: momoNetwork,
+        });
+        setOrderId(oid); setMomoDisplayText(displayText); setPayStatus('momo_pending'); clearCart();
+        startPolling(reference);
+      } else if (payMethod === 'bank') {
+        const { orderId: oid } = await api.post('/payments/bank', {
+          items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
+          shipping, guestEmail: shipping.email,
+        });
+        setOrderId(oid); setPayStatus('bank_pending'); clearCart();
+      } else if (payMethod === 'card') {
+        if (!config?.paystackPublicKey) { setError('Payment not ready — please refresh.'); return; }
+        const { orderId: oid, total } = await api.post('/payments/bank', {
+          items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
+          shipping, guestEmail: shipping.email,
+        });
+        const handler = PaystackPop.setup({
+          key: config.paystackPublicKey,
+          email: shipping.email,
+          amount: Math.round(total * 100),
+          currency: 'GHS',
+          ref: oid,
+          metadata: { orderId: oid },
+          callback: async (response) => {
+            try {
+              await api.get(`/payments/verify/${response.reference}`);
+              setOrderId(oid); setPayStatus('confirmed'); clearCart();
+            } catch(e) { setError(e.message); }
+            finally { setLoading(false); }
+          },
+          onClose: () => setLoading(false),
+        });
+        handler.openIframe();
+        return;
+      }
+    } catch(e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const copyToClipboard = (text, label) => {
+    try { navigator.clipboard.writeText(text); } catch {}
+  };
+
+  if (!cart.length && !orderId) return (
+    <div style={{maxWidth:600,margin:'100px auto',padding:'40px 20px',textAlign:'center'}} className="fade-up">
+      <div style={{fontSize:64,marginBottom:20,opacity:.5}}>🛒</div>
+      <h2 style={{fontWeight:900,fontSize:40,letterSpacing:-1,marginBottom:12}}>NOTHING IN YOUR CART</h2>
+      <p style={{color:'#666',fontFamily:'Barlow',marginBottom:28,fontSize:15}}>Add a Resurrection tee or Stand Top first — then come back to check out.</p>
+      <button className="btn btn-primary" style={{padding:'14px 36px'}} onClick={()=>nav('shop')}>BROWSE PRODUCTS →</button>
+    </div>
+  );
+
+  if (orderId) return (
+    <div style={{maxWidth:640,margin:'60px auto',padding:20}} className="fade-up">
+      {payStatus==='momo_pending' && (
+        <div className="card" style={{padding:'48px 36px',textAlign:'center',borderTop:'4px solid #f7941d'}}>
+          <div style={{width:96,height:96,background:'#1a1000',border:'3px solid #f7941d',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 28px',fontSize:42,animation:'pulse 1.6s ease infinite'}}>📱</div>
+          <h1 style={{fontWeight:900,fontSize:38,letterSpacing:-1,marginBottom:14,lineHeight:1}}>CHECK YOUR PHONE</h1>
+          <p style={{color:'#f7941d',fontFamily:'Barlow',fontSize:15,fontWeight:700,marginBottom:18}}>{momoDisplayText || 'Approve the MoMo prompt to complete payment.'}</p>
+          <div style={{background:'#0d0d0d',border:'1px solid #1e1e1e',padding:'14px 18px',display:'inline-block',marginBottom:24,fontFamily:'Barlow'}}>
+            <span style={{color:'#555',fontSize:12,letterSpacing:2}}>ORDER</span> <strong style={{color:'#fff',marginLeft:10}}>{orderId}</strong>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:10,justifyContent:'center',marginBottom:32,padding:'12px 18px',background:'#0d0d0d',border:'1px dashed #2a2a2a'}}>
+            <div className="spinner" style={{width:16,height:16,borderWidth:2}} />
+            <span style={{fontFamily:'Barlow',color:'#888',fontSize:13}}>Waiting for confirmation — this page updates automatically</span>
+          </div>
+          <p style={{color:'#444',fontFamily:'Barlow',fontSize:12,marginBottom:24}}>Didn't get a prompt? Dial <strong style={{color:'#fff'}}>*170#</strong> (MTN) → My Wallet → Approvals.</p>
+          <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+            <button className="btn btn-outline" onClick={()=>nav('track')}>TRACK ORDER</button>
+            <button className="btn btn-ghost" onClick={()=>nav('shop')}>KEEP SHOPPING</button>
+          </div>
+        </div>
+      )}
+      {payStatus==='bank_pending' && (
+        <div className="card" style={{padding:'48px 36px',textAlign:'center',borderTop:'4px solid #f7941d'}}>
+          <div style={{width:96,height:96,background:'#1a1000',border:'3px solid #f7941d',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 28px',fontSize:42}}>🏦</div>
+          <h1 style={{fontWeight:900,fontSize:38,letterSpacing:-1,marginBottom:14,lineHeight:1}}>ORDER RECEIVED</h1>
+          <p style={{color:'#888',fontFamily:'Barlow',fontSize:15,marginBottom:8}}>Order <strong style={{color:'#fff'}}>{orderId}</strong></p>
+          <p style={{color:'#666',fontFamily:'Barlow',fontSize:14,marginBottom:24,maxWidth:440,margin:'0 auto 24px',lineHeight:1.6}}>Complete your bank transfer using the details below. Once we verify it, your order moves into production within 48 hours.</p>
+          {config?.bank && (
+            <div style={{background:'#0d0d0d',border:'2px solid #f7941d',padding:24,marginBottom:24,textAlign:'left'}}>
+              <div style={{fontSize:11,letterSpacing:3,color:'#f7941d',marginBottom:16,fontWeight:800}}>TRANSFER TO</div>
+              {[['BANK',config.bank.name],['NAME',config.bank.accountName],['ACCOUNT',config.bank.accountNumber],['AMOUNT',`GHS ${cartTotal?.toFixed?.(2)||''}`]].map(([k,v])=>(
+                <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid #1a1a1a'}}>
+                  <span style={{color:'#555',fontSize:11,letterSpacing:2.5,fontWeight:700}}>{k}</span>
+                  <strong style={{fontFamily:'Barlow',fontSize:15,letterSpacing:k==='ACCOUNT'?1:0}}>{v}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+            <button className="btn btn-primary" onClick={()=>nav('track')}>TRACK ORDER</button>
+            <button className="btn btn-outline" onClick={()=>nav('shop')}>KEEP SHOPPING</button>
+          </div>
+        </div>
+      )}
+      {payStatus==='confirmed' && (
+        <div className="card" style={{padding:'56px 36px',textAlign:'center',borderTop:'4px solid #27ae60'}}>
+          <div style={{width:108,height:108,background:'#0a1a0f',border:'3px solid #27ae60',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 28px',fontSize:48,color:'#27ae60',fontWeight:900}}>✓</div>
+          <div style={{display:'inline-block',background:'#27ae60',color:'#0a0a0a',padding:'4px 14px',fontSize:10,fontWeight:900,letterSpacing:3,marginBottom:18}}>PAID</div>
+          <h1 style={{fontWeight:900,fontSize:48,letterSpacing:-1,marginBottom:14,lineHeight:1}}>YOU'RE IN.</h1>
+          <p style={{color:'#888',fontFamily:'Barlow',fontSize:16,marginBottom:8}}>Order <strong style={{color:'#fff'}}>{orderId}</strong> confirmed.</p>
+          <p style={{color:'#666',fontFamily:'Barlow',fontSize:14,marginBottom:36,maxWidth:380,margin:'0 auto 36px',lineHeight:1.6}}>A confirmation email is on the way. We start production within 48 hours and you'll get tracking updates by email.</p>
+          <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+            <button className="btn btn-primary" style={{padding:'14px 28px'}} onClick={()=>nav('track')}>TRACK MY ORDER</button>
+            <button className="btn btn-outline" style={{padding:'14px 28px'}} onClick={()=>nav('shop')}>KEEP SHOPPING</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const STEPS = ['Shipping','Payment','Review'];
+  const itemCount = cart.reduce((s,i)=>s+i.qty,0);
+
+  return (
+    <div style={{maxWidth:1080,margin:'0 auto',padding:'48px 20px 80px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:32,flexWrap:'wrap',gap:16}}>
+        <div>
+          <span className="section-tag">SECURE CHECKOUT</span>
+          <h1 style={{fontWeight:900,fontSize:'clamp(36px,7vw,56px)',letterSpacing:-2,lineHeight:1}}>CHECKOUT</h1>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8,color:'#555',fontFamily:'Barlow',fontSize:12,letterSpacing:1.5,textTransform:'uppercase'}}>
+          🔒 256-bit encrypted · Paystack secured
+        </div>
+      </div>
+
+      {/* Stepper */}
+      <div style={{display:'flex',alignItems:'center',marginBottom:40,padding:'18px 22px',background:'#0d0d0d',border:'1px solid #1a1a1a'}}>
+        {STEPS.map((s,i)=>(
+          <React.Fragment key={s}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{width:30,height:30,borderRadius:'50%',background:step>i+1?'#27ae60':step===i+1?'#c0392b':'#1a1a1a',border:`2px solid ${step>=i+1?(step>i+1?'#27ae60':'#c0392b'):'#222'}`,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:12,color:'#fff',transition:'all .3s'}}>{step>i+1?'✓':i+1}</div>
+              <span style={{fontWeight:800,fontSize:11,letterSpacing:2,color:step===i+1?'#fff':step>i+1?'#27ae60':'#444'}}>{s.toUpperCase()}</span>
+            </div>
+            {i<2&&<div style={{flex:1,height:2,background:step>i+1?'#27ae60':'#1a1a1a',margin:'0 14px',transition:'background .3s'}} />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="co-grid">
+        <div>
+          {/* STEP 1 — SHIPPING */}
+          {step===1&&<div className="card fade-up" style={{padding:'32px 36px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:6}}>
+              <div style={{width:32,height:32,background:'#c0392b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900}}>1</div>
+              <h3 style={{fontWeight:900,fontSize:22,letterSpacing:1}}>SHIPPING DETAILS</h3>
+            </div>
+            <p style={{color:'#555',fontFamily:'Barlow',fontSize:13,marginBottom:24,marginLeft:44}}>Where should we send your order?</p>
+            <div className="co-form-grid">
+              {[['name','Full Name','Jane Doe'],['email','Email','you@example.com'],['phone','Phone','0551234567'],['address','Street Address','House #, Street, Suburb'],['city','City','Accra'],['zip','ZIP / GPS Code','GA-123-4567']].map(([k,l,ph])=>(
+                <div key={k} style={{gridColumn:k==='address'?'1/-1':'auto'}}>
+                  <label className="label">{l}</label>
+                  <input className="input" value={shipping[k]} placeholder={ph} onChange={e=>setShipping(s=>({...s,[k]:e.target.value}))} />
+                </div>
+              ))}
+            </div>
+            {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:13,marginTop:16,padding:'10px 14px',background:'#1a0808',borderLeft:'3px solid #e74c3c'}}>{error}</p>}
+            <button className="btn btn-primary" style={{marginTop:28,padding:'15px 36px',fontSize:15,width:'100%'}} onClick={()=>{
+              if (!shipping.name||!shipping.email||!shipping.address||!shipping.city||!shipping.zip) { setError('Please fill in all required fields.'); return; }
+              setError(''); setStep(2);
+            }}>CONTINUE TO PAYMENT →</button>
+          </div>}
+
+          {/* STEP 2 — PAYMENT */}
+          {step===2&&(
+            <div className="card fade-up" style={{padding:'32px 36px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:6}}>
+                <div style={{width:32,height:32,background:'#c0392b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900}}>2</div>
+                <h3 style={{fontWeight:900,fontSize:22,letterSpacing:1}}>PAYMENT METHOD</h3>
+              </div>
+              <p style={{color:'#555',fontFamily:'Barlow',fontSize:13,marginBottom:24,marginLeft:44}}>Pick how you'd like to pay.</p>
+
+              {/* Payment method cards */}
+              {[
+                {key:'momo',icon:'📱',title:'Mobile Money',desc:'Approve on your phone — MTN, Vodafone, AirtelTigo. Most popular.',badge:'INSTANT'},
+                {key:'card',icon:'💳',title:'Card',desc:'Visa, Mastercard, or any local card via Paystack.',badge:null},
+                {key:'bank',icon:'🏦',title:'Bank Transfer',desc:'Manual transfer to our GCB account. Verified by us.',badge:'MANUAL'},
+              ].map(opt=>(
+                <div key={opt.key} className={`co-pay-card${payMethod===opt.key?' active':''}`} onClick={()=>{setPayMethod(opt.key);setError('');}}>
+                  <div className="co-pay-icon">{opt.icon}</div>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
+                      <strong style={{fontSize:16,letterSpacing:.5}}>{opt.title}</strong>
+                      {opt.badge&&<span style={{fontSize:9,fontWeight:900,letterSpacing:1.5,padding:'2px 8px',background:opt.key==='momo'?'#f7941d':'#222',color:'#fff'}}>{opt.badge}</span>}
+                    </div>
+                    <p style={{color:'#666',fontFamily:'Barlow',fontSize:13,margin:0,lineHeight:1.5}}>{opt.desc}</p>
+                  </div>
+                  <div style={{width:20,height:20,borderRadius:'50%',border:`2px solid ${payMethod===opt.key?'#c0392b':'#333'}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:14}}>
+                    {payMethod===opt.key&&<div style={{width:10,height:10,borderRadius:'50%',background:'#c0392b'}} />}
+                  </div>
+                </div>
+              ))}
+
+              {/* MoMo form */}
+              {payMethod==='momo'&&(
+                <div className="fade-up" style={{marginTop:20,padding:24,background:'#0d0805',border:'1px solid #2a1a00'}}>
+                  <label className="label">YOUR MOMO PHONE NUMBER</label>
+                  <input className="input" placeholder="e.g. 0551234567" value={momoPhone} onChange={e=>setMomoPhone(e.target.value)} style={{marginBottom:18,fontSize:16,letterSpacing:1}} />
+                  <label className="label">NETWORK</label>
+                  <div style={{display:'flex',gap:10}}>
+                    {[
+                      {code:'mtn',name:'MTN',sub:'Mobile Money',color:'#f7941d'},
+                      {code:'vod',name:'Telecel',sub:'Cash',color:'#e60000'},
+                      {code:'tgo',name:'AT',sub:'Money',color:'#0066cc'},
+                    ].map(n=>(
+                      <button key={n.code} onClick={()=>setMomoNetwork(n.code)} className={`co-net-card${momoNetwork===n.code?' active':''}`} style={momoNetwork===n.code?{borderColor:n.color,background:`${n.color}15`}:{}}>
+                        <div style={{fontWeight:900,fontSize:14,color:momoNetwork===n.code?n.color:'#888'}}>{n.name}</div>
+                        <div style={{fontSize:10,color:'#555',marginTop:2,letterSpacing:1}}>{n.sub}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:12,marginTop:14,lineHeight:1.5}}>💡 After you tap "PAY NOW", you'll get a prompt on your phone. Enter your MoMo PIN to approve.</p>
+                </div>
+              )}
+
+              {/* Bank Transfer details */}
+              {payMethod==='bank'&&config?.bank&&(
+                <div className="fade-up" style={{marginTop:20,padding:24,background:'#0d0805',border:'1px solid #2a1a00'}}>
+                  <div style={{fontSize:11,letterSpacing:3,color:'#f7941d',marginBottom:14,fontWeight:800}}>TRANSFER TO</div>
+                  {[['Bank',config.bank.name,null],['Account Name',config.bank.accountName,null],['Account Number',config.bank.accountNumber,config.bank.accountNumber],['Amount',`GHS ${cartTotal.toFixed(2)}`,null]].map(([l,v,copyVal])=>(
+                    <div key={l} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid #1a1a1a'}}>
+                      <span style={{color:'#666',fontFamily:'Barlow',fontSize:13}}>{l}</span>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <strong style={{fontFamily:'Barlow',fontSize:15}}>{v}</strong>
+                        {copyVal&&<button onClick={()=>copyToClipboard(copyVal)} style={{background:'#1a1a1a',border:'1px solid #333',color:'#888',padding:'3px 10px',fontSize:10,fontWeight:700,cursor:'pointer',letterSpacing:1}}>COPY</button>}
+                      </div>
+                    </div>
+                  ))}
+                  <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:12,marginTop:14,lineHeight:1.5}}>💡 Once you place the order, send your payment reference to us so we can verify quickly.</p>
+                </div>
+              )}
+
+              {/* Card */}
+              {payMethod==='card'&&(
+                <div className="fade-up" style={{marginTop:20,padding:24,background:'#0d0805',border:'1px solid #2a1a00',textAlign:'center'}}>
+                  <div style={{display:'flex',gap:10,justifyContent:'center',marginBottom:14,fontSize:22,letterSpacing:8,opacity:.7}}>💳</div>
+                  <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:13,lineHeight:1.6,margin:'0 0 10px'}}>You'll be redirected to a secure Paystack popup to enter your card details. We never see your card number.</p>
+                  <p style={{color:'#666',fontFamily:'Barlow',fontSize:11,letterSpacing:1.5,textTransform:'uppercase'}}>🔒 PCI-DSS Compliant · 3D Secure</p>
+                </div>
+              )}
+
+              {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:13,marginTop:16,padding:'10px 14px',background:'#1a0808',borderLeft:'3px solid #e74c3c'}}>{error}</p>}
+              <div style={{display:'flex',gap:12,marginTop:28}}>
+                <button className="btn btn-outline" onClick={()=>{setError('');setStep(1);}}>← BACK</button>
+                <button className="btn btn-primary" style={{flex:1,padding:'15px',fontSize:15}} onClick={()=>{setError('');setStep(3);}}>REVIEW ORDER →</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 — REVIEW */}
+          {step===3&&<div className="card fade-up" style={{padding:'32px 36px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:6}}>
+              <div style={{width:32,height:32,background:'#c0392b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900}}>3</div>
+              <h3 style={{fontWeight:900,fontSize:22,letterSpacing:1}}>REVIEW & PAY</h3>
+            </div>
+            <p style={{color:'#555',fontFamily:'Barlow',fontSize:13,marginBottom:24,marginLeft:44}}>One last look before you hit go.</p>
+
+            <div style={{background:'#0d0d0d',border:'1px solid #1a1a1a',padding:'16px 20px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16}}>
+              <div style={{flex:1}}>
+                <div className="label" style={{marginBottom:6}}>SHIPPING TO</div>
+                <p style={{fontFamily:'Barlow',color:'#ccc',lineHeight:1.7,margin:0,fontSize:14}}>
+                  <strong style={{color:'#fff'}}>{shipping.name}</strong><br/>
+                  {shipping.address}<br/>
+                  {shipping.city} {shipping.zip}<br/>
+                  <span style={{color:'#666'}}>{shipping.phone} · {shipping.email}</span>
+                </p>
+              </div>
+              <button onClick={()=>setStep(1)} style={{background:'none',border:'1px solid #333',color:'#888',padding:'5px 12px',fontSize:10,fontWeight:700,letterSpacing:1.5,cursor:'pointer'}}>EDIT</button>
+            </div>
+
+            <div style={{background:'#0d0d0d',border:'1px solid #1a1a1a',padding:'16px 20px',marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'center',gap:16}}>
+              <div>
+                <div className="label" style={{marginBottom:6}}>PAYMENT METHOD</div>
+                <p style={{fontFamily:'Barlow',color:'#ccc',margin:0,fontSize:14}}>
+                  {payMethod==='momo' ? `📱 Mobile Money · ${momoPhone||'(no number)'} (${momoNetwork.toUpperCase()})`
+                    : payMethod==='bank' ? `🏦 Bank Transfer · ${config?.bank?.name||'GCB'}`
+                    : '💳 Card via Paystack'}
+                </p>
+              </div>
+              <button onClick={()=>setStep(2)} style={{background:'none',border:'1px solid #333',color:'#888',padding:'5px 12px',fontSize:10,fontWeight:700,letterSpacing:1.5,cursor:'pointer'}}>EDIT</button>
+            </div>
+
+            <div className="label" style={{marginBottom:10}}>YOUR ORDER ({itemCount} {itemCount===1?'ITEM':'ITEMS'})</div>
+            {cart.map(item=>(
+              <div key={item.id} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 0',borderBottom:'1px solid #1a1a1a'}}>
+                <div className="co-thumb">{item.image_url?<img src={item.image_url} alt={item.name}/>:<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',fontSize:20}}>🧱</div>}</div>
+                <div style={{flex:1,fontFamily:'Barlow'}}>
+                  <div style={{fontWeight:700,fontSize:14}}>{item.name}</div>
+                  <div style={{color:'#666',fontSize:12,marginTop:2}}>Qty {item.qty} · GHS {item.price} each</div>
+                </div>
+                <div style={{fontWeight:800,fontSize:15}}>GHS {(item.price*item.qty).toFixed(2)}</div>
+              </div>
+            ))}
+
+            {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:14,marginTop:14,padding:'10px 14px',background:'#1a0808',borderLeft:'3px solid #e74c3c'}}>{error}</p>}
+
+            <div style={{display:'flex',gap:12,marginTop:28}}>
+              <button className="btn btn-outline" onClick={()=>{setError('');setStep(2);}} disabled={loading}>← BACK</button>
+              <button className="btn btn-primary" style={{flex:1,padding:'17px',fontSize:16}} onClick={placeOrder} disabled={loading}>
+                {loading?<Spin/>:payMethod==='bank'?`PLACE ORDER · GHS ${cartTotal.toFixed(2)}`:`PAY GHS ${cartTotal.toFixed(2)} NOW`}
+              </button>
+            </div>
+            <p style={{textAlign:'center',color:'#444',fontFamily:'Barlow',fontSize:11,marginTop:14,letterSpacing:1.5,textTransform:'uppercase'}}>By placing this order, you agree to our terms</p>
+          </div>}
+        </div>
+
+        {/* ── ORDER SUMMARY (sticky right) ── */}
+        <div className="card co-summary" style={{padding:'24px 26px',position:'sticky',top:84}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:18}}>
+            <h3 style={{fontWeight:900,fontSize:16,letterSpacing:1.5}}>ORDER SUMMARY</h3>
+            <span style={{color:'#555',fontFamily:'Barlow',fontSize:12}}>{itemCount} {itemCount===1?'item':'items'}</span>
+          </div>
+          <div style={{maxHeight:280,overflowY:'auto',marginBottom:16,paddingRight:4}}>
+            {cart.map(item=>(
+              <div key={item.id} style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
+                <div className="co-thumb" style={{position:'relative'}}>
+                  {item.image_url?<img src={item.image_url} alt={item.name}/>:<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',fontSize:18}}>🧱</div>}
+                  <div style={{position:'absolute',top:-6,right:-6,background:'#c0392b',color:'#fff',borderRadius:'50%',width:18,height:18,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:10}}>{item.qty}</div>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:'Barlow',fontSize:13,fontWeight:700,color:'#ddd',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{item.name}</div>
+                  <div style={{color:'#666',fontFamily:'Barlow',fontSize:11}}>GHS {item.price} each</div>
+                </div>
+                <div style={{fontWeight:800,fontSize:13,whiteSpace:'nowrap'}}>GHS {(item.price*item.qty).toFixed(2)}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{borderTop:'1px solid #1e1e1e',paddingTop:14,fontFamily:'Barlow'}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13,color:'#888'}}><span>Subtotal</span><span style={{color:'#fff',fontWeight:700}}>GHS {cartTotal.toFixed(2)}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13,color:'#888'}}><span>Shipping</span><span style={{color:'#27ae60',fontWeight:800,letterSpacing:1}}>FREE</span></div>
+          </div>
+          <div style={{borderTop:'2px solid #c0392b',paddingTop:14,marginTop:6,display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+            <span style={{fontWeight:900,fontSize:14,letterSpacing:1.5}}>TOTAL</span>
+            <span style={{fontWeight:900,fontSize:24,color:'#c0392b'}}>GHS {cartTotal.toFixed(2)}</span>
+          </div>
+          <div className="co-trust">
+            <span>🔒 Secure</span>
+            <span>📦 Free Ship</span>
+            <span>↩ 7-day Returns</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── TRACK PAGE ────────────────────────────────────────────────────────────────
+const STATUS_STEPS = ['Order Received','In Production','Quality Check','Shipped','Delivered'];
+
+function TrackPage({ user }) {
+  const [searchId, setSearchId] = React.useState('');
+  const [order, setOrder] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const api = useApi();
+
+  const search = async () => {
+    if (!searchId.trim()) return;
+    setLoading(true); setError(''); setOrder(null);
+    try { setOrder(await api.get(`/orders/track/${searchId.trim()}`)); }
+    catch { setError('Order not found. Check your order ID.'); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{maxWidth:860,margin:'0 auto',padding:'60px 20px'}}>
+      <span className="section-tag">REAL-TIME UPDATES</span>
+      <h1 className="resp-h1" style={{fontWeight:900,fontSize:64,letterSpacing:-2,lineHeight:1,marginBottom:48}}>TRACK<br/>YOUR ORDER</h1>
+      <div className="card" style={{padding:36,marginBottom:48}}>
+        <p style={{color:'#666',fontFamily:'Barlow',marginBottom:20}}>Enter your order ID from your confirmation. <strong style={{color:'#fff'}}>Try: ORD-2800</strong></p>
+        <div style={{display:'flex',gap:12}}>
+          <input className="input" placeholder="e.g. ORD-2800" value={searchId} onChange={e=>setSearchId(e.target.value)} onKeyDown={e=>e.key==='Enter'&&search()} style={{flex:1}} />
+          <button className="btn btn-primary" style={{padding:'12px 28px'}} onClick={search} disabled={loading}>{loading?<Spin/>:'TRACK'}</button>
+        </div>
+        {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:14,marginTop:12}}>{error}</p>}
+      </div>
+      {order&&<OrderCard order={order} />}
+    </div>
+  );
+}
+
+function OrderCard({ order }) {
+  const stepIdx = STATUS_STEPS.indexOf(order.status);
+  const cancelled = order.status==='Cancelled';
+  const statusColor = cancelled?'#e74c3c':order.status==='Delivered'?'#27ae60':'#f39c12';
+  return (
+    <div className="card fade-up" style={{padding:36}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:32,flexWrap:'wrap',gap:16}}>
+        <div>
+          <div style={{fontWeight:900,fontSize:26,letterSpacing:1}}>{order.id}</div>
+          <div style={{color:'#555',fontSize:13,marginTop:4,fontFamily:'Barlow'}}>Placed {order.created_at?.slice(0,10)}</div>
+          {order.items?.length>0&&<div style={{marginTop:8,color:'#888',fontFamily:'Barlow',fontSize:13}}>{order.items.map(i=>`${i.product_name} ×${i.quantity}`).join(', ')}</div>}
+          {order.tracking_number&&<div style={{marginTop:8,fontSize:13,fontFamily:'Barlow'}}>📦 Tracking: <span style={{color:'#c0392b',fontWeight:700}}>{order.tracking_number}</span></div>}
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontWeight:900,fontSize:30,color:'#c0392b'}}>GHS {order.total?.toFixed(2)}</div>
+          <span style={{display:'inline-block',marginTop:8,padding:'4px 14px',fontSize:10,fontWeight:900,letterSpacing:2,border:`1px solid ${statusColor}`,color:statusColor}}>{order.status?.toUpperCase()}</span>
+        </div>
+      </div>
+      {!cancelled&&<div style={{position:'relative',paddingBottom:40}}>
+        <div style={{position:'absolute',top:16,left:20,right:20,height:2,background:'#1e1e1e'}} />
+        <div style={{position:'absolute',top:16,left:20,height:2,background:'#c0392b',width:`${(Math.max(0,stepIdx)/(STATUS_STEPS.length-1))*88}%`,transition:'width .8s ease'}} />
+        <div style={{display:'flex',justifyContent:'space-between',position:'relative'}}>
+          {STATUS_STEPS.map((s,i)=>(
+            <div key={s} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+              <div style={{width:32,height:32,borderRadius:'50%',background:i<=stepIdx?'#c0392b':'#1e1e1e',border:`2px solid ${i<=stepIdx?'#c0392b':'#333'}`,display:'flex',alignItems:'center',justifyContent:'center',zIndex:1,transition:'all .4s'}}>
+                {i<stepIdx?'✓':i===stepIdx?'●':''}
+              </div>
+              <span className="track-step-label" style={{fontWeight:800,letterSpacing:1.5,color:i<=stepIdx?'#fff':'#444',textAlign:'center',maxWidth:70}}>{s.toUpperCase()}</span>
+            </div>
+          ))}
+        </div>
+      </div>}
+      {order.history?.length>0&&<div style={{marginTop:8,borderTop:'1px solid #1a1a1a',paddingTop:20}}>
+        <div className="label" style={{marginBottom:12}}>STATUS HISTORY</div>
+        {order.history.map((h,i)=><div key={i} style={{display:'flex',gap:16,marginBottom:10,fontFamily:'Barlow',fontSize:13}}><span style={{color:'#444'}}>{h.created_at?.slice(0,10)}</span><span style={{color:'#888'}}>{h.status}</span>{h.note&&<span style={{color:'#555'}}>— {h.note}</span>}</div>)}
+      </div>}
+    </div>
+  );
+}
+
+// ── RESET PASSWORD PAGE ───────────────────────────────────────────────────────
+function ResetPasswordPage({ pageData, nav }) {
+  const [password, setPassword] = React.useState('');
+  const [confirm, setConfirm]   = React.useState('');
+  const [loading, setLoading]   = React.useState(false);
+  const [error, setError]       = React.useState('');
+  const [done, setDone]         = React.useState(false);
+  const api = useApi();
+  const token = pageData?.resetToken;
+
+  const submit = async () => {
+    setError('');
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password !== confirm) { setError('Passwords do not match'); return; }
+    setLoading(true);
+    try {
+      await api.post('/auth/reset-password', { token, password });
+      setDone(true);
+      window.history.replaceState({}, '', '/');
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  if (!token) return (
+    <div style={{maxWidth:480,margin:'80px auto',padding:20,textAlign:'center'}}>
+      <h1 style={{fontWeight:900,fontSize:40,letterSpacing:-1,marginBottom:16}}>NO RESET TOKEN</h1>
+      <p style={{color:'#666',fontFamily:'Barlow',marginBottom:24}}>This page needs a reset link from your email.</p>
+      <button className="btn btn-primary" onClick={()=>nav('account')}>BACK TO SIGN IN</button>
+    </div>
+  );
+
+  return (
+    <div style={{maxWidth:480,margin:'80px auto',padding:20}}>
+      <span className="section-tag">RESET PASSWORD</span>
+      <h1 style={{fontWeight:900,fontSize:48,letterSpacing:-1,marginBottom:40}}>SET A NEW PASSWORD</h1>
+      <div className="card resp-pad" style={{padding:40}}>
+        {done ? <>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:48,marginBottom:16}}>✓</div>
+            <h3 style={{fontWeight:900,fontSize:22,marginBottom:12}}>PASSWORD UPDATED</h3>
+            <p style={{color:'#666',fontFamily:'Barlow',marginBottom:24}}>You can now sign in with your new password.</p>
+            <button className="btn btn-primary" style={{width:'100%',padding:'14px'}} onClick={()=>nav('account')}>GO TO SIGN IN</button>
+          </div>
+        </> : <>
+          <div style={{display:'grid',gap:20}}>
+            <div><label className="label">New Password</label><input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} /></div>
+            <div><label className="label">Confirm Password</label><input className="input" type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} /></div>
+          </div>
+          {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:14,marginTop:14}}>{error}</p>}
+          <button className="btn btn-primary" style={{width:'100%',padding:'16px',marginTop:24,fontSize:16}} onClick={submit} disabled={loading}>{loading?<Spin/>:'UPDATE PASSWORD'}</button>
+        </>}
+      </div>
+    </div>
+  );
+}
+
+// ── ACCOUNT PAGE ──────────────────────────────────────────────────────────────
+function AccountPage({ user, setUser, setToken, nav }) {
+  const [mode, setMode] = React.useState('login'); // 'login' | 'register' | 'forgot'
+  const [tab, setTab] = React.useState('orders');
+  const [form, setForm] = React.useState({name:'',email:'',password:'',phone:''});
+  const [profile, setProfile] = React.useState({});
+  const [orders, setOrders] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [info, setInfo] = React.useState('');
+  const [saved, setSaved] = React.useState(false);
+  const [googleClientId, setGoogleClientId] = React.useState(null);
+  const googleBtnRef = React.useRef(null);
+  const api = useApi();
+
+  React.useEffect(() => { api.get('/config').then(c => setGoogleClientId(c.googleClientId)).catch(()=>{}); }, []);
+
+  // Render Google Sign-In button once GIS script + client ID are both ready
+  React.useEffect(() => {
+    if (user || !googleClientId || !googleBtnRef.current) return;
+    const tryRender = () => {
+      if (!window.google?.accounts?.id) return false;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response) => {
+          setLoading(true); setError('');
+          try {
+            const { token, user: u } = await api.post('/auth/google', { credential: response.credential });
+            localStorage.setItem('dc_token', token);
+            setToken(token); setUser(u);
+          } catch (e) { setError(e.message); }
+          finally { setLoading(false); }
+        },
+      });
+      googleBtnRef.current.innerHTML = '';
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'filled_black', size: 'large', shape: 'rectangular', text: mode==='register'?'signup_with':'signin_with', width: 320,
+      });
+      return true;
+    };
+    if (!tryRender()) {
+      const iv = setInterval(() => { if (tryRender()) clearInterval(iv); }, 200);
+      return () => clearInterval(iv);
+    }
+  }, [googleClientId, mode, user]);
+
+  React.useEffect(() => {
+    if (user) {
+      setProfile({name:user.name,phone:user.phone||'',address:user.address||'',city:user.city||'',zip:user.zip||''});
+      api.get('/orders/my').then(setOrders).catch(()=>{});
+    }
+  }, [user]);
+
+  const handleAuth = async () => {
+    setLoading(true); setError(''); setInfo('');
+    try {
+      if (mode==='forgot') {
+        await api.post('/auth/forgot-password', { email: form.email });
+        setInfo('If an account exists for that email, a reset link is on its way. Check your inbox (and spam).');
+      } else {
+        const endpoint = mode==='login'?'/auth/login':'/auth/register';
+        const body = mode==='login'?{email:form.email,password:form.password}:{name:form.name,email:form.email,password:form.password,phone:form.phone};
+        const { token, user: u } = await api.post(endpoint, body);
+        localStorage.setItem('dc_token', token);
+        setToken(token); setUser(u);
+      }
+    } catch(e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const switchMode = (next) => { setMode(next); setError(''); setInfo(''); };
+
+  const saveProfile = async () => {
+    setLoading(true);
+    try { const u = await api.put('/auth/profile', profile); setUser(u); setSaved(true); setTimeout(()=>setSaved(false),2000); }
+    catch(e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  if (!user) {
+    const title = mode==='login'?'SIGN IN':mode==='register'?'CREATE ACCOUNT':'FORGOT PASSWORD';
+    const cta   = mode==='login'?'SIGN IN':mode==='register'?'CREATE ACCOUNT':'SEND RESET LINK';
+    return (
+      <div style={{maxWidth:480,margin:'80px auto',padding:20}}>
+        <span className="section-tag">CUSTOMER PORTAL</span>
+        <h1 className="resp-h1" style={{fontWeight:900,fontSize:52,letterSpacing:-1,marginBottom:40}}>{title}</h1>
+        <div className="card resp-pad" style={{padding:40}}>
+          <div style={{display:'grid',gap:20}}>
+            {mode==='register'&&<><div><label className="label">Full Name</label><input className="input" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} /></div><div><label className="label">Phone (optional)</label><input className="input" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} /></div></>}
+            <div><label className="label">Email</label><input className="input" type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&handleAuth()} /></div>
+            {mode!=='forgot'&&<div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+                <label className="label">Password</label>
+                {mode==='login'&&<span onClick={()=>switchMode('forgot')} style={{color:'#c0392b',cursor:'pointer',fontWeight:700,fontSize:10,letterSpacing:1.5,textTransform:'uppercase'}}>Forgot?</span>}
+              </div>
+              <input className="input" type="password" value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&handleAuth()} />
+            </div>}
+          </div>
+          {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:14,marginTop:14}}>{error}</p>}
+          {info&&<p style={{color:'#27ae60',fontFamily:'Barlow',fontSize:14,marginTop:14}}>{info}</p>}
+          <button className="btn btn-primary" style={{width:'100%',padding:'16px',marginTop:24,fontSize:16}} onClick={handleAuth} disabled={loading}>{loading?<Spin/>:cta}</button>
+          {googleClientId && mode!=='forgot' && <>
+            <div style={{display:'flex',alignItems:'center',gap:12,margin:'24px 0 18px',color:'#333',fontFamily:'Barlow',fontSize:11,letterSpacing:2}}>
+              <div style={{flex:1,height:1,background:'#1e1e1e'}} /> OR <div style={{flex:1,height:1,background:'#1e1e1e'}} />
+            </div>
+            <div ref={googleBtnRef} style={{display:'flex',justifyContent:'center'}} />
+          </>}
+          <p style={{textAlign:'center',marginTop:20,color:'#555',fontFamily:'Barlow',fontSize:14}}>
+            {mode==='login' && <>No account? <span onClick={()=>switchMode('register')} style={{color:'#c0392b',cursor:'pointer',fontWeight:700}}>Register</span></>}
+            {mode==='register' && <>Have one? <span onClick={()=>switchMode('login')} style={{color:'#c0392b',cursor:'pointer',fontWeight:700}}>Sign In</span></>}
+            {mode==='forgot' && <>Remembered it? <span onClick={()=>switchMode('login')} style={{color:'#c0392b',cursor:'pointer',fontWeight:700}}>Back to Sign In</span></>}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{maxWidth:900,margin:'0 auto',padding:'60px 20px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:48,flexWrap:'wrap',gap:16}}>
+        <div><span className="section-tag">WELCOME BACK</span><h1 className="resp-account-h1 resp-h1" style={{fontWeight:900,fontSize:52,letterSpacing:-1}}>{user.name.toUpperCase()}</h1><div style={{color:'#555',fontFamily:'Barlow',marginTop:4}}>{user.email}</div></div>
+        <div style={{display:'flex',gap:10}}>
+          {user.role==='admin'&&<button className="btn btn-outline" onClick={()=>nav('admin')}>ADMIN PANEL</button>}
+        </div>
+      </div>
+      <div style={{display:'flex',gap:0,marginBottom:40,borderBottom:'2px solid #1e1e1e'}}>
+        {[['orders','MY ORDERS'],['details','ACCOUNT DETAILS']].map(([t,l])=><button key={t} onClick={()=>setTab(t)} className="btn" style={{padding:'14px 28px',color:tab===t?'#fff':'#555',borderBottom:tab===t?'3px solid #c0392b':'3px solid transparent',marginBottom:-2,background:'none'}}>{l}</button>)}
+      </div>
+      {tab==='orders'&&<div>
+        {orders.length===0?<div style={{textAlign:'center',padding:'60px 0',color:'#444'}}><div style={{fontSize:48}}>📦</div><p style={{fontFamily:'Barlow',marginTop:16}}>No orders yet.</p><button className="btn btn-primary" style={{marginTop:20}} onClick={()=>nav('shop')}>SHOP NOW</button></div>
+          :orders.map(o=>(
+            <div key={o.id} className="card" style={{padding:24,marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
+              <div><div style={{fontWeight:900,fontSize:18,letterSpacing:1}}>{o.id}</div><div style={{color:'#555',fontSize:12,fontFamily:'Barlow',marginTop:4}}>{o.created_at?.slice(0,10)} · {o.items?.map(i=>i.product_name).join(', ')}</div></div>
+              <div style={{display:'flex',alignItems:'center',gap:14}}>
+                <span style={{padding:'4px 12px',fontSize:10,fontWeight:900,letterSpacing:2,border:`1px solid ${o.status==='Delivered'?'#27ae60':'#f39c12'}`,color:o.status==='Delivered'?'#27ae60':'#f39c12'}}>{o.status?.toUpperCase()}</span>
+                <span style={{fontWeight:900,fontSize:22,color:'#c0392b'}}>GHS {o.total?.toFixed(2)}</span>
+              </div>
+            </div>
+          ))
+        }
+      </div>}
+      {tab==='details'&&<div className="card" style={{padding:40,maxWidth:520}}>
+        <h3 style={{fontWeight:900,fontSize:24,marginBottom:28,letterSpacing:1}}>UPDATE DETAILS</h3>
+        <div style={{display:'grid',gap:20}}>
+          {[['name','Full Name'],['phone','Phone'],['address','Street Address'],['city','City'],['zip','ZIP']].map(([k,l])=><div key={k}><label className="label">{l}</label><input className="input" value={profile[k]||''} onChange={e=>setProfile(p=>({...p,[k]:e.target.value}))} /></div>)}
+        </div>
+        {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:14,marginTop:14}}>{error}</p>}
+        <button className="btn btn-primary" style={{marginTop:28,padding:'14px 36px',fontSize:15}} onClick={saveProfile} disabled={loading}>{loading?<Spin/>:saved?'✓ SAVED':'SAVE CHANGES'}</button>
+      </div>}
+    </div>
+  );
+}
+
+// ── CONTACT PAGE ──────────────────────────────────────────────────────────────
+function ContactPage() {
+  const [form, setForm] = React.useState({name:'',email:'',phone:'',projectType:'',dimensions:'',message:''});
+  const [loading, setLoading] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const api = useApi();
+  const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
+
+  const submit = async () => {
+    if (!form.name||!form.email||!form.message) { setError('Name, email and message required.'); return; }
+    setLoading(true); setError('');
+    try { await api.post('/contact', form); setSubmitted(true); }
+    catch(e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  if (submitted) return (
+    <div style={{maxWidth:600,margin:'80px auto',padding:20,textAlign:'center'}} className="fade-up">
+      <div style={{width:80,height:80,background:'#c0392b',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 32px',fontSize:36}}>✓</div>
+      <h1 style={{fontWeight:900,fontSize:48,letterSpacing:-1,marginBottom:16}}>GOT IT!</h1>
+      <p style={{color:'#888',fontFamily:'Barlow',fontSize:16}}>We'll get back to you within 1–2 business days with a quote.</p>
+    </div>
+  );
+
+  return (
+    <div style={{maxWidth:1100,margin:'0 auto',padding:'60px 20px'}}>
+      <div className="resp-2col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:80,alignItems:'start'}}>
+        <div>
+          <span className="section-tag">CUSTOM PIECES</span>
+          <h1 className="resp-quote-h1" style={{fontWeight:900,fontSize:64,letterSpacing:-2,lineHeight:.9,marginBottom:32}}>GET A<br/><span style={{color:'#c0392b'}}>QUOTE</span></h1>
+          <p style={{color:'#777',fontFamily:'Barlow',fontSize:16,lineHeight:1.8,marginBottom:40}}>Need something outside our catalogue? We cast custom pieces of any shape or size.</p>
+          {[['📐','Any Dimensions','Countertops, tables, fire pits — cast to your exact spec.'],['🎨','Custom Finishes','Natural raw, sealed matte, acid-stained, or pigmented.'],['⚡','Fast Turnaround','Most custom orders start within 48 hours.'],['💬','Free Consultation',"We'll work through the details before you commit."]].map(([icon,title,desc])=>(
+            <div key={title} style={{display:'flex',gap:16,alignItems:'flex-start',marginBottom:24}}>
+              <div style={{fontSize:28,flexShrink:0}}>{icon}</div>
+              <div><div style={{fontWeight:800,fontSize:16,marginBottom:4}}>{title}</div><div style={{color:'#666',fontFamily:'Barlow',fontSize:14,lineHeight:1.5}}>{desc}</div></div>
+            </div>
+          ))}
+          <div className="card" style={{padding:24,marginTop:32,borderLeft:'3px solid #c0392b'}}>
+            <div className="label" style={{marginBottom:10}}>REACH US DIRECTLY</div>
+            <a href="mailto:order.deadconcrete12@gmail.com" style={{display:'flex',gap:10,alignItems:'center',color:'#ccc',textDecoration:'none',fontFamily:'Barlow',fontSize:14,marginBottom:10}}>📧 order.deadconcrete12@gmail.com</a>
+            <a href="https://wa.me/233257440091" target="_blank" rel="noopener" style={{display:'flex',gap:10,alignItems:'center',color:'#27ae60',textDecoration:'none',fontFamily:'Barlow',fontSize:14,marginBottom:10,fontWeight:700}}>💬 WhatsApp 0257 440 091</a>
+            <div style={{display:'flex',gap:10,alignItems:'center',color:'#888',fontFamily:'Barlow',fontSize:14}}>📍 Accra, Ghana</div>
+          </div>
+        </div>
+        <div className="card resp-pad" style={{padding:40}}>
+          <h3 style={{fontWeight:900,fontSize:24,marginBottom:28,letterSpacing:1}}>TELL US ABOUT YOUR PROJECT</h3>
+          <div style={{display:'grid',gap:18}}>
+            <div className="resp-2col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+              <div><label className="label">Name *</label><input className="input" value={form.name} onChange={set('name')} /></div>
+              <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={set('phone')} /></div>
+            </div>
+            <div><label className="label">Email *</label><input className="input" type="email" value={form.email} onChange={set('email')} /></div>
+            <div><label className="label">Project Type</label>
+              <select className="input" value={form.projectType} onChange={set('projectType')}>
+                <option value="">Select...</option>
+                {['Kitchen Countertop','Bathroom Vanity','Outdoor Table','Bar Counter','Fire Pit','Wall Caps','Post Caps','Other'].map(t=><option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div><label className="label">Dimensions</label><input className="input" placeholder='e.g. 72" × 25", 3cm thick' value={form.dimensions} onChange={set('dimensions')} /></div>
+            <div><label className="label">Message *</label><textarea className="input" rows={5} value={form.message} onChange={set('message')} placeholder="Describe your project..." style={{resize:'vertical'}} /></div>
+          </div>
+          {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:14,marginTop:14}}>{error}</p>}
+          <button className="btn btn-primary" style={{width:'100%',padding:'16px',marginTop:24,fontSize:16}} onClick={submit} disabled={loading}>{loading?<Spin/>:'SEND QUOTE REQUEST'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ADMIN PAGE ────────────────────────────────────────────────────────────────
+const STATUS_OPTIONS = ['Order Received','In Production','Quality Check','Shipped','Delivered','Cancelled'];
+const STATUS_COLORS = {'Order Received':'#3498db','In Production':'#e67e22','Quality Check':'#9b59b6','Shipped':'#1abc9c','Delivered':'#27ae60','Cancelled':'#e74c3c'};
+
+function AdminPage({ user, nav }) {
+  const [tab, setTab] = React.useState('dashboard');
+  const [stats, setStats] = React.useState(null);
+  const [orders, setOrders] = React.useState([]);
+  const [products, setProducts] = React.useState([]);
+  const [quotes, setQuotes] = React.useState([]);
+  const [pending, setPending] = React.useState([]);
+  const [selected, setSelected] = React.useState(null);
+  const [newStatus, setNewStatus] = React.useState('');
+  const [statusNote, setStatusNote] = React.useState('');
+  const [trackingNum, setTrackingNum] = React.useState('');
+  const [newProd, setNewProd] = React.useState({name:'',category:'tops',price:'',description:'',badge:''});
+  const [newProdImg, setNewProdImg] = React.useState(null);
+  const [editProd, setEditProd] = React.useState(null);
+  const [editProdImg, setEditProdImg] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const api = useApi();
+  const toast = useToast();
+
+  const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('dc_token')}` });
+
+  const purgeDemo = async () => {
+    if (!window.confirm('Delete demo users, orders and example quotes? This cannot be undone.')) return;
+    setLoading(true);
+    try {
+      const result = await api.del('/admin/demo-cleanup');
+      toast(`${result.deletedUsers || 0} demo user(s) removed`, 'success');
+      load();
+    } catch(e) {
+      toast(`Cleanup failed: ${e.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => { if (!user||user.role!=='admin') { nav('account'); return; } load(); }, [user]);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [s,o,p,q,r] = await Promise.all([api.get('/admin/stats'),api.get('/orders'),api.get('/products'),api.get('/contact'),api.get('/reviews/pending')]);
+      setStats(s); setOrders(o.orders||[]); setProducts(p); setQuotes(Array.isArray(q)?q:[]); setPending(Array.isArray(r)?r:[]);
+    } catch(e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  const updateStatus = async () => {
+    if (!newStatus||!selected) return;
+    await api.patch(`/orders/${selected.id}/status`,{status:newStatus,note:statusNote,trackingNumber:trackingNum});
+    setSelected(null); setNewStatus(''); setStatusNote(''); setTrackingNum(''); load();
+  };
+
+  const verifyMomo = async (order) => {
+    if (!window.confirm(`Confirm MoMo payment verified for ${order.id}?\n\nRef: ${order.notes}\n\nThis will mark the order as confirmed and send a confirmation email to the customer.`)) return;
+    try {
+      await api.patch(`/orders/${order.id}/status`, { status: 'Order Received', verifyMomo: true, note: 'MoMo payment verified' });
+      toast('MoMo payment verified — order confirmed!', 'success');
+      load();
+    } catch(e) { toast(e.message, 'error'); }
+  };
+
+  const addProduct = async () => {
+    if (!newProd.name||!newProd.price) { toast('Name and price required','error'); return; }
+    const fd = new FormData();
+    Object.entries({...newProd, price: parseFloat(newProd.price)}).forEach(([k,v]) => { if (v!==''&&v!=null) fd.append(k,v); });
+    if (newProdImg) fd.append('image', newProdImg);
+    try {
+      const res = await fetch('/api/products', { method:'POST', headers: authHeaders(), body: fd });
+      if (!res.ok) { const d = await res.json(); toast(d.error||'Failed','error'); return; }
+      setNewProd({name:'',category:'tops',price:'',description:'',badge:''}); setNewProdImg(null); load(); toast('Product added','success');
+    } catch(e) { toast(e.message,'error'); }
+  };
+
+  const saveEditProduct = async () => {
+    if (!editProd||!editProd.name||!editProd.price) { toast('Name and price required','error'); return; }
+    const fd = new FormData();
+    ['name','category','price','description','badge','accent_color','in_stock'].forEach(k => { if (editProd[k]!==undefined&&editProd[k]!==null) fd.append(k, editProd[k]); });
+    if (editProdImg) fd.append('image', editProdImg);
+    try {
+      const res = await fetch(`/api/products/${editProd.id}`, { method:'PUT', headers: authHeaders(), body: fd });
+      if (!res.ok) { const d = await res.json(); toast(d.error||'Failed','error'); return; }
+      setEditProd(null); setEditProdImg(null); load(); toast('Product updated','success');
+    } catch(e) { toast(e.message,'error'); }
+  };
+
+  const toggleStock = async (p) => {
+    const fd = new FormData();
+    ['name','category','description','badge','accent_color'].forEach(k => { if (p[k]) fd.append(k, p[k]); });
+    fd.append('price', p.price); fd.append('in_stock', p.in_stock ? '0' : '1');
+    try {
+      await fetch(`/api/products/${p.id}`, { method:'PUT', headers: authHeaders(), body: fd });
+      load(); toast(p.in_stock ? 'Product hidden' : 'Product visible', 'success');
+    } catch(e) { toast(e.message,'error'); }
+  };
+
+  const TABS = [['dashboard','OVERVIEW'],['orders','ORDERS'],['products','PRODUCTS'],['quotes',`QUOTES${quotes.filter(q=>q.status==='new').length?` (${quotes.filter(q=>q.status==='new').length})`:''}`],['reviews',`REVIEWS${pending.length?` (${pending.length})`:''}`]];
+
+  if (!user||user.role!=='admin') return null;
+
+  return (
+    <div style={{maxWidth:1200,margin:'0 auto',padding:'60px 20px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:48}}>
+        <div><span className="section-tag">ADMIN PANEL</span><h1 className="resp-h1" style={{fontWeight:900,fontSize:52,letterSpacing:-1}}>DASHBOARD</h1></div>
+        <div style={{display:'flex',gap:8}}>
+          <button className="btn btn-outline" onClick={purgeDemo} disabled={loading}>{loading?<Spin/>:'Purge DEMO DATA'}</button>
+          <button className="btn btn-outline" onClick={load} disabled={loading}>{loading?<Spin/>:'↺ REFRESH'}</button>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:0,marginBottom:40,borderBottom:'2px solid #1e1e1e',overflowX:'auto'}}>
+        {TABS.map(([t,l])=><button key={t} onClick={()=>setTab(t)} className="btn" style={{padding:'14px 22px',color:tab===t?'#fff':'#555',borderBottom:tab===t?'3px solid #c0392b':'3px solid transparent',marginBottom:-2,background:'none',whiteSpace:'nowrap'}}>{l}</button>)}
+      </div>
+
+      {tab==='dashboard'&&stats&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:20,marginBottom:48}}>
+          {[['REVENUE',`$${stats.totalRevenue?.toFixed(2)}`,'#c0392b'],['ORDERS',stats.totalOrders,'#e67e22'],['IN PROGRESS',stats.pendingOrders,'#3498db'],['CUSTOMERS',stats.totalCustomers,'#27ae60']].map(([l,v,c])=><div key={l} className="card" style={{padding:28,borderTop:`3px solid ${c}`}}><div className="label">{l}</div><div style={{fontWeight:900,fontSize:40,color:c,lineHeight:1}}>{v}</div></div>)}
+          {stats.momoAwating>0&&<div className="card" style={{padding:28,borderTop:'3px solid #f7941d',cursor:'pointer'}} onClick={()=>setTab('orders')}><div className="label">MOMO PENDING</div><div style={{fontWeight:900,fontSize:40,color:'#f7941d',lineHeight:1}}>{stats.momoAwating}</div><div style={{color:'#666',fontFamily:'Barlow',fontSize:11,marginTop:6}}>Tap to verify</div></div>}
+        </div>
+        <div className="resp-2col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24}}>
+          <div className="card" style={{padding:28}}><h3 style={{fontWeight:900,fontSize:18,marginBottom:20,letterSpacing:1}}>BY STATUS</h3>{stats.byStatus?.map(r=><div key={r.status} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><span style={{fontFamily:'Barlow',color:'#aaa',fontSize:14}}>{r.status}</span><div style={{display:'flex',alignItems:'center',gap:10}}><div style={{width:80,height:6,background:'#1e1e1e',borderRadius:3,overflow:'hidden'}}><div style={{height:'100%',background:STATUS_COLORS[r.status]||'#888',width:`${(r.count/Math.max(stats.totalOrders,1))*100}%`}} /></div><span style={{fontWeight:800,fontSize:14}}>{r.count}</span></div></div>)}</div>
+          <div className="card" style={{padding:28}}><h3 style={{fontWeight:900,fontSize:18,marginBottom:20,letterSpacing:1}}>RECENT ORDERS</h3>{stats.recentOrders?.map(o=><div key={o.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14,paddingBottom:14,borderBottom:'1px solid #1a1a1a'}}><div><div style={{fontWeight:800,fontSize:14}}>{o.id}</div><div style={{color:'#555',fontSize:12,fontFamily:'Barlow'}}>{o.customer_name||'Guest'}</div></div><div style={{textAlign:'right'}}><div style={{fontWeight:800,color:'#c0392b'}}>${o.total?.toFixed(2)}</div><div style={{fontSize:10,color:STATUS_COLORS[o.status]||'#888',fontWeight:700}}>{o.status?.toUpperCase()}</div></div></div>)}</div>
+        </div>
+      </div>}
+
+      {tab==='orders'&&<div>
+        {selected&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div className="card" style={{width:'100%',maxWidth:500,padding:36}}>
+            <h3 style={{fontWeight:900,fontSize:22,marginBottom:24}}>UPDATE: {selected.id}</h3>
+            {selected.stripe_payment_status==='momo_pending'&&(
+              <div style={{background:'#1a0f00',border:'1px solid #f7941d',padding:'12px 16px',marginBottom:20,borderRadius:4}}>
+                <div style={{fontSize:10,letterSpacing:2,color:'#f7941d',marginBottom:6}}>MOMO REFERENCE</div>
+                <div style={{fontWeight:800,color:'#fff',wordBreak:'break-all'}}>{selected.notes}</div>
+                <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:12,margin:'8px 0 0'}}>Verify this reference in your MTN wallet before confirming.</p>
+              </div>
+            )}
+            <div style={{marginBottom:16}}><label className="label">New Status</label><select className="input" value={newStatus} onChange={e=>setNewStatus(e.target.value)}><option value="">Select...</option>{STATUS_OPTIONS.map(s=><option key={s}>{s}</option>)}</select></div>
+            <div style={{marginBottom:16}}><label className="label">Tracking Number (optional)</label><input className="input" value={trackingNum} onChange={e=>setTrackingNum(e.target.value)} placeholder="1Z999AA1..." /></div>
+            <div style={{marginBottom:24}}><label className="label">Note (optional)</label><input className="input" value={statusNote} onChange={e=>setStatusNote(e.target.value)} placeholder="e.g. Curing complete" /></div>
+            <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+              <button className="btn btn-outline" onClick={()=>setSelected(null)}>CANCEL</button>
+              {selected.stripe_payment_status==='momo_pending'&&(
+                <button style={{flex:1,padding:'10px',background:'#f7941d',color:'#000',fontWeight:900,fontSize:12,letterSpacing:1,border:'none',cursor:'pointer'}} onClick={()=>{setSelected(null);verifyMomo(selected);}}>✓ VERIFY MOMO PAYMENT</button>
+              )}
+              <button className="btn btn-primary" style={{flex:1}} onClick={updateStatus}>UPDATE STATUS</button>
+            </div>
+          </div>
+        </div>}
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{borderBottom:'2px solid #1e1e1e'}}>{['Order','Customer','Date','Total','Status','Payment','Action'].map(h=><th key={h} style={{padding:'12px 16px',textAlign:'left',fontSize:10,fontWeight:800,letterSpacing:2,color:'#555'}}>{h}</th>)}</tr></thead>
+            <tbody>{orders.map(o=><tr key={o.id} style={{borderBottom:'1px solid #1a1a1a',background:o.stripe_payment_status==='momo_pending'?'#0d0a00':'transparent'}}>
+              <td style={{padding:'16px',fontWeight:800}}>{o.id}</td>
+              <td style={{padding:'16px',fontFamily:'Barlow',color:'#aaa',fontSize:14}}>{o.customer_name||o.guest_email||'Guest'}</td>
+              <td style={{padding:'16px',fontFamily:'Barlow',color:'#666',fontSize:13}}>{o.created_at?.slice(0,10)}</td>
+              <td style={{padding:'16px',fontWeight:800,color:'#c0392b'}}>GHS {o.total?.toFixed(2)}</td>
+              <td style={{padding:'16px'}}><span style={{padding:'4px 10px',fontSize:9,fontWeight:900,letterSpacing:1.5,color:STATUS_COLORS[o.status]||'#888',border:`1px solid ${STATUS_COLORS[o.status]||'#888'}`}}>{o.status?.toUpperCase()}</span></td>
+              <td style={{padding:'16px'}}>
+                {o.stripe_payment_status==='momo_pending'&&<span style={{padding:'3px 8px',fontSize:9,fontWeight:900,letterSpacing:1,color:'#f7941d',border:'1px solid #f7941d'}}>📱 MOMO</span>}
+                {o.stripe_payment_status==='momo_verified'&&<span style={{padding:'3px 8px',fontSize:9,fontWeight:900,letterSpacing:1,color:'#27ae60',border:'1px solid #27ae60'}}>✓ MOMO</span>}
+                {o.stripe_payment_status==='succeeded'&&<span style={{padding:'3px 8px',fontSize:9,fontWeight:900,letterSpacing:1,color:'#3498db',border:'1px solid #3498db'}}>💳 CARD</span>}
+              </td>
+              <td style={{padding:'16px',display:'flex',gap:6,flexWrap:'wrap'}}>
+                {o.stripe_payment_status==='momo_pending'&&<button style={{padding:'6px 10px',background:'#f7941d',color:'#000',fontWeight:900,fontSize:10,border:'none',cursor:'pointer',letterSpacing:1}} onClick={()=>verifyMomo(o)}>VERIFY</button>}
+                <button className="btn btn-outline" style={{padding:'6px 14px',fontSize:11}} onClick={()=>{setSelected(o);setNewStatus(o.status);}}>UPDATE</button>
+              </td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+      </div>}
+
+      {tab==='products'&&<div>
+        {/* Edit product modal */}
+        {editProd&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.88)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div className="card" style={{width:'100%',maxWidth:560,padding:36,maxHeight:'90vh',overflowY:'auto'}}>
+            <h3 style={{fontWeight:900,fontSize:22,marginBottom:24,letterSpacing:1}}>EDIT: {editProd.name}</h3>
+            <div className="resp-2col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <div><label className="label">Name</label><input className="input" value={editProd.name} onChange={e=>setEditProd(p=>({...p,name:e.target.value}))} /></div>
+              <div><label className="label">Price ($)</label><input className="input" type="number" value={editProd.price} onChange={e=>setEditProd(p=>({...p,price:e.target.value}))} /></div>
+              <div><label className="label">Badge</label><input className="input" value={editProd.badge||''} onChange={e=>setEditProd(p=>({...p,badge:e.target.value}))} placeholder="e.g. NEW" /></div>
+              <div><label className="label">Category</label><select className="input" value={editProd.category} onChange={e=>setEditProd(p=>({...p,category:e.target.value}))}>{['tops','caps','custom'].map(c=><option key={c}>{c}</option>)}</select></div>
+              <div style={{gridColumn:'1/-1'}}><label className="label">Description</label><input className="input" value={editProd.description||''} onChange={e=>setEditProd(p=>({...p,description:e.target.value}))} /></div>
+              <div style={{gridColumn:'1/-1'}}>
+                <label className="label">Replace Image (optional)</label>
+                <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setEditProdImg(e.target.files[0]||null)} />
+                {editProd.image_url&&!editProdImg&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:10}}><img src={editProd.image_url} alt="" style={{width:60,height:60,objectFit:'cover',border:'1px solid #333'}} /><span style={{color:'#555',fontFamily:'Barlow',fontSize:12}}>Current image</span></div>}
+              </div>
+            </div>
+            <div style={{display:'flex',gap:12,marginTop:24}}>
+              <button className="btn btn-outline" onClick={()=>{setEditProd(null);setEditProdImg(null);}}>CANCEL</button>
+              <button className="btn btn-primary" style={{flex:1}} onClick={saveEditProduct}>SAVE CHANGES</button>
+            </div>
+          </div>
+        </div>}
+
+        {/* Add product form */}
+        <div className="card" style={{padding:32,marginBottom:32}}>
+          <h3 style={{fontWeight:900,fontSize:20,marginBottom:24,letterSpacing:1}}>ADD NEW PRODUCT</h3>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:18}}>
+            <div><label className="label">Name</label><input className="input" value={newProd.name} onChange={e=>setNewProd(p=>({...p,name:e.target.value}))} /></div>
+            <div><label className="label">Price ($)</label><input className="input" type="number" value={newProd.price} onChange={e=>setNewProd(p=>({...p,price:e.target.value}))} /></div>
+            <div><label className="label">Badge</label><input className="input" value={newProd.badge} onChange={e=>setNewProd(p=>({...p,badge:e.target.value}))} placeholder="e.g. NEW" /></div>
+            <div><label className="label">Category</label><select className="input" value={newProd.category} onChange={e=>setNewProd(p=>({...p,category:e.target.value}))}>{['tops','caps','custom'].map(c=><option key={c}>{c}</option>)}</select></div>
+            <div style={{gridColumn:'1/-1'}}><label className="label">Description</label><input className="input" value={newProd.description} onChange={e=>setNewProd(p=>({...p,description:e.target.value}))} /></div>
+            <div style={{gridColumn:'1/-1'}}>
+              <label className="label">Product Image (optional)</label>
+              <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setNewProdImg(e.target.files[0]||null)} />
+            </div>
+          </div>
+          <button className="btn btn-primary" style={{marginTop:24,padding:'12px 32px'}} onClick={addProduct}>+ ADD PRODUCT</button>
+        </div>
+
+        {/* Product list */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:20}}>
+          {products.map(p=><div key={p.id} className="card" style={{padding:0,overflow:'hidden',opacity:p.in_stock?1:.55}}>
+            {p.image_url
+              ? <img src={p.image_url} alt={p.name} style={{width:'100%',height:140,objectFit:'cover',display:'block'}} />
+              : <div style={{height:140,background:`linear-gradient(135deg,#1a1a1a,${p.accent_color||'#c0392b'}22)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:48}}>🧱</div>
+            }
+            <div style={{padding:20}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><div><div className="label">{p.category}</div><div style={{fontWeight:900,fontSize:17}}>{p.name}</div></div><div style={{fontWeight:900,fontSize:20,color:'#c0392b'}}>GHS {p.price}</div></div>
+              <p style={{color:'#666',fontSize:13,fontFamily:'Barlow',lineHeight:1.4,marginBottom:12,minHeight:36}}>{p.description}</p>
+              <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:14}}>
+                {p.badge&&<span style={{background:'#c0392b',padding:'2px 8px',fontSize:9,fontWeight:900}}>{p.badge}</span>}
+                <span style={{color:p.in_stock?'#27ae60':'#e74c3c',fontSize:11,fontWeight:700}}>{p.in_stock?'● IN STOCK':'○ HIDDEN'}</span>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn btn-outline" style={{flex:1,padding:'7px 10px',fontSize:11}} onClick={()=>{setEditProd({...p});setEditProdImg(null);}}>EDIT</button>
+                <button className="btn btn-outline" style={{padding:'7px 14px',fontSize:11,borderColor:p.in_stock?'#e74c3c !important':'#27ae60 !important',color:p.in_stock?'#e74c3c':'#27ae60'}} onClick={()=>toggleStock(p)}>{p.in_stock?'HIDE':'SHOW'}</button>
+              </div>
+            </div>
+          </div>)}
+        </div>
+      </div>}
+
+      {tab==='quotes'&&<div>
+        {quotes.length===0?<div style={{textAlign:'center',padding:'60px 0',color:'#444'}}><div style={{fontSize:48}}>📬</div><p style={{fontFamily:'Barlow',marginTop:16}}>No quote requests yet.</p></div>
+          :quotes.map(q=><div key={q.id} className="card" style={{padding:28,marginBottom:16}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16,flexWrap:'wrap',gap:12}}>
+              <div><div style={{fontWeight:900,fontSize:18}}>{q.name}</div><div style={{fontFamily:'Barlow',color:'#888',fontSize:14,marginTop:2}}>{q.email}{q.phone?` · ${q.phone}`:''}</div><div style={{fontFamily:'Barlow',color:'#555',fontSize:12,marginTop:4}}>{q.created_at?.slice(0,10)}</div></div>
+              <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                <span style={{padding:'4px 12px',fontSize:10,fontWeight:900,letterSpacing:1.5,color:q.status==='new'?'#f39c12':'#27ae60',border:`1px solid ${q.status==='new'?'#f39c12':'#27ae60'}`}}>{q.status?.toUpperCase()}</span>
+                {q.status==='new'&&<button className="btn btn-primary" style={{padding:'7px 16px',fontSize:11}} onClick={()=>api.patch(`/contact/${q.id}`,{status:'responded'}).then(load)}>MARK RESPONDED</button>}
+                <a href={`mailto:${q.email}`} className="btn btn-outline" style={{padding:'7px 16px',fontSize:11,textDecoration:'none'}}>REPLY</a>
+              </div>
+            </div>
+            {q.project_type&&<div style={{marginBottom:8}}><span className="label" style={{display:'inline'}}>PROJECT: </span><span style={{fontWeight:700,fontSize:14}}>{q.project_type}</span></div>}
+            <div style={{background:'#0f0f0f',border:'1px solid #1a1a1a',padding:'14px 18px',marginTop:8}}><p style={{fontFamily:'Barlow',color:'#aaa',fontSize:14,lineHeight:1.7,margin:0,fontStyle:'italic'}}>"{q.message}"</p></div>
+          </div>)
+        }
+      </div>}
+
+      {tab==='reviews'&&<div>
+        {pending.length===0?<div style={{textAlign:'center',padding:'60px 0',color:'#444'}}><div style={{fontSize:48}}>⭐</div><p style={{fontFamily:'Barlow',marginTop:16}}>No pending reviews.</p></div>
+          :pending.map(r=><div key={r.id} className="card" style={{padding:28,marginBottom:16}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:12}}>
+              <div><div style={{fontWeight:900,fontSize:16}}>{r.reviewer_name} <span style={{color:'#555',fontWeight:400,fontFamily:'Barlow',fontSize:13}}>on {r.product_name}</span></div><div style={{display:'flex',gap:2,marginTop:6}}>{[1,2,3,4,5].map(n=><span key={n} style={{color:n<=r.rating?'#f39c12':'#333',fontSize:16}}>★</span>)}</div></div>
+              <div style={{display:'flex',gap:10}}>
+                <button className="btn btn-primary" style={{padding:'8px 18px',fontSize:12}} onClick={()=>api.patch(`/reviews/${r.id}`,{approved:true}).then(load)}>✓ APPROVE</button>
+                <button className="btn btn-outline" style={{padding:'8px 18px',fontSize:12,borderColor:'#e74c3c !important',color:'#e74c3c'}} onClick={()=>api.patch(`/reviews/${r.id}`,{approved:false}).then(load)}>✕ REJECT</button>
+              </div>
+            </div>
+            {r.title&&<div style={{fontWeight:700,fontSize:16,marginBottom:8}}>{r.title}</div>}
+            {r.body&&<p style={{fontFamily:'Barlow',color:'#888',fontSize:14,lineHeight:1.7,margin:0}}>{r.body}</p>}
+          </div>)
+        }
+      </div>}
+    </div>
+  );
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -801,9 +801,11 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
 
   const openPaystackPopup = async (channels) => {
     if (!config?.paystackPublicKey) { setError('Payment not ready — please refresh.'); return; }
+    const method = channels?.[0] === 'mobile_money' ? 'momo' : channels?.[0] === 'card' ? 'card' : 'bank';
     const { orderId: oid, total } = await api.post('/payments/bank', {
       items: cart.map(i => ({ productId: i.id, quantity: i.qty, size: i.size||null })),
       shipping, guestEmail: shipping.email,
+      paymentMethod: method,
     });
     const handler = PaystackPop.setup({
       key: config.paystackPublicKey,

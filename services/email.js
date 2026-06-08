@@ -56,12 +56,73 @@ export async function sendPasswordResetEmail(user, resetUrl) {
   await send(user.email, 'Reset your Dead Concrete password', html);
 }
 
+export async function sendNewOrderAlert(order, items, paymentMethod = 'unknown') {
+  if (!process.env.ADMIN_EMAIL) return;
+  const recipient = order.guest_email || order.customer_email || 'no-email';
+  const rows = items.map(i =>
+    `<tr>
+      <td style="padding:10px;border-bottom:1px solid #222;">${i.product_name}${i.size ? ` <span style="color:#c0392b;font-weight:700;">· ${i.size}</span>` : ''}</td>
+      <td style="padding:10px;border-bottom:1px solid #222;text-align:center;">×${i.quantity}</td>
+      <td style="padding:10px;border-bottom:1px solid #222;text-align:right;">GHS ${i.total_price.toFixed(2)}</td>
+    </tr>`
+  ).join('');
+
+  const methodLabel = paymentMethod === 'momo' ? '📱 Mobile Money' : paymentMethod === 'card' ? '💳 Card' : paymentMethod === 'bank' ? '🏦 Bank Transfer' : paymentMethod;
+  const html = `
+  <div style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:40px;max-width:620px;margin:0 auto;">
+    <div style="background:#c0392b;padding:3px 0;margin-bottom:32px;"></div>
+    <h1 style="font-size:28px;font-weight:900;letter-spacing:-1px;margin:0 0 8px;">🧱 NEW ORDER — ${order.id}</h1>
+    <p style="color:#888;margin:0 0 28px;">Customer placed via <strong style="color:#fff;">${methodLabel}</strong> · ${order.stripe_payment_status === 'succeeded' ? '<span style="color:#27ae60;font-weight:800;">PAID</span>' : '<span style="color:#f7941d;font-weight:800;">AWAITING PAYMENT</span>'}</p>
+
+    <div style="background:#111;border-left:3px solid #c0392b;padding:18px 20px;margin-bottom:18px;">
+      <div style="font-size:10px;letter-spacing:3px;color:#c0392b;margin-bottom:10px;font-weight:800;">CUSTOMER</div>
+      <div style="color:#fff;font-size:17px;font-weight:700;margin-bottom:4px;">${order.shipping_name || '—'}</div>
+      <div style="color:#bbb;font-size:14px;line-height:1.7;">
+        📧 <a href="mailto:${recipient}" style="color:#bbb;">${recipient}</a><br>
+        📱 ${order.shipping_phone || '—'}
+      </div>
+    </div>
+
+    <div style="background:#111;border-left:3px solid #f7941d;padding:18px 20px;margin-bottom:18px;">
+      <div style="font-size:10px;letter-spacing:3px;color:#f7941d;margin-bottom:10px;font-weight:800;">SHIPPING ADDRESS</div>
+      <div style="color:#fff;font-size:15px;line-height:1.7;">
+        ${order.shipping_address || '—'}<br>
+        ${order.shipping_city || ''} ${order.shipping_zip || ''}
+      </div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;background:#111;margin-bottom:8px;">
+      <thead>
+        <tr style="border-bottom:2px solid #c0392b;">
+          <th style="padding:12px;text-align:left;font-size:11px;letter-spacing:2px;color:#555;">ITEM</th>
+          <th style="padding:12px;text-align:center;font-size:11px;letter-spacing:2px;color:#555;">QTY</th>
+          <th style="padding:12px;text-align:right;font-size:11px;letter-spacing:2px;color:#555;">SUBTOTAL</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="padding:14px 0;text-align:right;font-size:22px;font-weight:900;color:#c0392b;">
+      TOTAL: GHS ${order.total.toFixed(2)}
+    </div>
+
+    ${order.notes ? `<div style="background:#1a1100;border:1px solid #f7941d;padding:14px 18px;margin-top:16px;"><div style="font-size:10px;letter-spacing:2px;color:#f7941d;margin-bottom:6px;font-weight:800;">MOMO / TXN REFERENCE</div><div style="color:#fff;font-family:monospace;word-break:break-all;">${order.notes}</div></div>` : ''}
+
+    <p style="margin-top:28px;color:#555;font-size:13px;line-height:1.6;">
+      Open the admin panel to verify, update status, or reply: <a href="${process.env.SITE_URL || 'http://localhost:3000'}/?p=admin" style="color:#c0392b;">${process.env.SITE_URL || 'localhost:3000'}/admin</a>
+    </p>
+    <div style="margin-top:36px;border-top:1px solid #1a1a1a;padding-top:18px;color:#333;font-size:11px;letter-spacing:3px;">
+      DEAD CONCRETE — RESURRECTION · STAND TOPS
+    </div>
+  </div>`;
+  await send(process.env.ADMIN_EMAIL, `🧱 New Order ${order.id} — GHS ${order.total.toFixed(2)} · ${order.shipping_name || 'customer'}`, html);
+}
+
 export async function sendOrderConfirmation(order, items) {
   const rows = items.map(i =>
     `<tr>
-      <td style="padding:10px;border-bottom:1px solid #222;">${i.product_name}</td>
+      <td style="padding:10px;border-bottom:1px solid #222;">${i.product_name}${i.size ? ` <span style="color:#c0392b;">· ${i.size}</span>` : ''}</td>
       <td style="padding:10px;border-bottom:1px solid #222;text-align:center;">×${i.quantity}</td>
-      <td style="padding:10px;border-bottom:1px solid #222;text-align:right;">$${i.total_price.toFixed(2)}</td>
+      <td style="padding:10px;border-bottom:1px solid #222;text-align:right;">GHS ${i.total_price.toFixed(2)}</td>
     </tr>`
   ).join('');
 
@@ -81,29 +142,29 @@ export async function sendOrderConfirmation(order, items) {
       <tbody>${rows}</tbody>
     </table>
     <div style="padding:16px 0;text-align:right;font-size:22px;font-weight:900;color:#c0392b;">
-      TOTAL: $${order.total.toFixed(2)}
+      TOTAL: GHS ${order.total.toFixed(2)}
     </div>
     <div style="background:#111;padding:20px;margin-top:16px;">
       <div style="font-size:10px;letter-spacing:3px;color:#555;margin-bottom:6px;">SHIPPING TO</div>
-      <div style="color:#aaa;">${order.shipping_name}<br>${order.shipping_address}, ${order.shipping_city} ${order.shipping_zip}</div>
+      <div style="color:#aaa;line-height:1.7;">${order.shipping_name}<br>${order.shipping_address}<br>${order.shipping_city} ${order.shipping_zip}${order.shipping_phone ? `<br>📱 ${order.shipping_phone}` : ''}</div>
     </div>
     <p style="margin-top:32px;color:#555;font-size:13px;">
       Track your order at <a href="${process.env.SITE_URL || 'http://localhost:3000'}" style="color:#c0392b;">deadconcrete.com</a> using order ID <strong>${order.id}</strong>
     </p>
     <div style="margin-top:40px;border-top:1px solid #1a1a1a;padding-top:20px;color:#333;font-size:11px;letter-spacing:3px;">
-      DEAD CONCRETE — TOPS · CAPS · CUSTOM PIECES
+      DEAD CONCRETE — RESURRECTION · STAND TOPS
     </div>
   </div>`;
 
   const recipient = order.guest_email || order.customer_email;
   if (recipient) await send(recipient, `Order Confirmed — ${order.id}`, html);
 
-  // Notify admin too
+  // Admin gets a payment-confirmed nudge (the detailed alert was already sent at order creation)
   if (process.env.ADMIN_EMAIL) {
     await send(
       process.env.ADMIN_EMAIL,
-      `🧱 New Order: ${order.id} — $${order.total.toFixed(2)}`,
-      `<p>New order <strong>${order.id}</strong> placed by ${order.shipping_name} (${recipient || 'guest'}).</p><p>Total: <strong>$${order.total.toFixed(2)}</strong></p>${html}`
+      `✅ Payment confirmed: ${order.id} — GHS ${order.total.toFixed(2)}`,
+      `<div style="font-family:sans-serif;padding:24px;background:#0a0a0a;color:#fff;"><h2 style="color:#27ae60;">✅ PAID — ${order.id}</h2><p>Payment cleared for <strong>${order.shipping_name}</strong> (${recipient || 'guest'}).</p><p style="font-size:22px;font-weight:900;color:#c0392b;">GHS ${order.total.toFixed(2)}</p><p>Full order details were already sent in the original "New Order" email. Start production within 48 hours.</p></div>`
     );
   }
 }

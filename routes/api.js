@@ -7,7 +7,7 @@ import { v4 as uuid } from 'uuid';
 import { getDb } from '../db/db.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
-import { sendQuoteAlert, sendMomoAlert, sendOrderConfirmation, sendPasswordResetEmail } from '../services/email.js';
+import { sendQuoteAlert, sendMomoAlert, sendOrderConfirmation, sendPasswordResetEmail, sendNewOrderAlert } from '../services/email.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -298,6 +298,13 @@ router.post('/payments/momo', async (req, res) => {
     db.prepare('INSERT INTO order_status_history (id,order_id,status,note) VALUES (?,?,?,?)')
       .run(uuid(), orderId, 'Awaiting Payment', `Paystack MoMo (${innerStatus}) — ref: ${reference}`);
 
+    // Notify admin immediately with full buyer details
+    try {
+      const fullOrder = db.prepare('SELECT * FROM orders WHERE id=?').get(orderId);
+      const fullItems = db.prepare('SELECT * FROM order_items WHERE order_id=?').all(orderId);
+      sendNewOrderAlert(fullOrder, fullItems, 'momo').catch(console.error);
+    } catch (e) { console.error('[admin alert] failed:', e); }
+
     res.status(201).json({
       orderId, reference, total: subtotal,
       paystackStatus: innerStatus,
@@ -393,6 +400,12 @@ router.post('/payments/paystack', async (req, res) => {
     db.prepare('INSERT INTO order_status_history (id,order_id,status,note) VALUES (?,?,?,?)')
       .run(uuid(), orderId, 'Awaiting Payment', `Paystack MoMo initiated — ref: ${reference}`);
 
+    try {
+      const fullOrder = db.prepare('SELECT * FROM orders WHERE id=?').get(orderId);
+      const fullItems = db.prepare('SELECT * FROM order_items WHERE order_id=?').all(orderId);
+      sendNewOrderAlert(fullOrder, fullItems, 'momo').catch(console.error);
+    } catch (e) { console.error('[admin alert] failed:', e); }
+
     res.status(201).json({
       orderId,
       reference,
@@ -440,7 +453,9 @@ router.post('/payments/bank', async (req, res) => {
 
     const order = db.prepare('SELECT * FROM orders WHERE id=?').get(orderId);
     const orderItems = db.prepare('SELECT * FROM order_items WHERE order_id=?').all(orderId);
-    sendMomoAlert(order, orderItems).catch(console.error);
+    // /payments/bank is also called for card via Paystack popup; the popup flow detects channel separately
+    const paymentMethod = req.body.paymentMethod || 'bank';
+    sendNewOrderAlert(order, orderItems, paymentMethod).catch(console.error);
 
     res.status(201).json({ orderId, total: subtotal });
   } finally { db.close(); }

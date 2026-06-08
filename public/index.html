@@ -14,7 +14,25 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap');
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Barlow Condensed',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+    :root{--bg:#0a0a0a;--text:#fff;--muted:#666;--card-shadow:none;--glow:0 0 24px rgba(192,57,43,.35)}
+    body[data-theme="light"]{--bg:#f6f3ee;--text:#0a0a0a;--muted:#666;--card-shadow:0 8px 32px rgba(0,0,0,.08);--glow:0 0 28px rgba(192,57,43,.45)}
+    body{font-family:'Barlow Condensed',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .4s ease,color .4s ease}
+    /* Theme-aware text colours for places that should follow theme */
+    body[data-theme="light"] main h1,
+    body[data-theme="light"] main h2,
+    body[data-theme="light"] main h3{color:var(--text)}
+    body[data-theme="light"] .theme-flip{color:var(--text) !important}
+    /* Ambient glow on hero + primary CTA */
+    .hero-glow{text-shadow:0 0 30px rgba(192,57,43,.35),0 0 60px rgba(192,57,43,.18)}
+    .btn-primary{box-shadow:var(--glow)}
+    .btn-primary:hover{box-shadow:0 0 36px rgba(192,57,43,.55)}
+    @keyframes ambientPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(192,57,43,.5))}50%{filter:drop-shadow(0 0 24px rgba(192,57,43,.55))}}
+    .ambient-pulse{animation:ambientPulse 4s ease infinite}
+    /* Theme toggle */
+    .theme-toggle{background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .25s}
+    .theme-toggle:hover{color:#fff;border-color:#c0392b;transform:rotate(20deg)}
+    body[data-theme="light"] .theme-toggle{border-color:#d4cdc0;color:#0a0a0a}
+    body[data-theme="light"] .theme-toggle:hover{color:#c0392b;border-color:#c0392b}
     ::-webkit-scrollbar{width:5px;background:#111}
     ::-webkit-scrollbar-thumb{background:#c0392b;border-radius:3px}
     @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
@@ -76,8 +94,13 @@
       .hamburger{display:block}
       .nav-links{display:none;position:absolute;top:64px;left:0;right:0;background:#111;border-bottom:3px solid #c0392b;flex-direction:column;padding:20px;gap:16px;z-index:99}
       .nav-links.open{display:flex}
-      .nav-actions .btn-primary{padding:7px 12px;font-size:12px}
+      .nav-actions .btn-primary{padding:7px 10px;font-size:11px;letter-spacing:1}
+      .nav-actions .btn-outline{padding:7px 10px;font-size:11px}
+      .nav-actions{gap:6px !important}
+      .nav-signin-text{display:none}
+      .nav-mobile-only{display:flex !important}
     }
+    @media(min-width:769px){.nav-mobile-only{display:none}}
     .co-grid{display:grid;grid-template-columns:1fr 360px;gap:32px;align-items:start}
     .co-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
     .co-pay-card{display:flex;gap:16px;align-items:flex-start;padding:18px 20px;border:2px solid #2a2a2a;background:#111;cursor:pointer;transition:all .2s;margin-bottom:12px}
@@ -239,6 +262,10 @@ function Stars({ rating, size=18, interactive=false, onRate }) {
 
 // ── APP ───────────────────────────────────────────────────────────────────────
 function App() {
+  const [theme, setTheme] = useLocalStorage('dc_theme', 'dark');
+  React.useEffect(() => { document.body.setAttribute('data-theme', theme); }, [theme]);
+  const toggleTheme = () => setTheme(t => t==='dark'?'light':'dark');
+
   React.useEffect(() => {
     const pl = document.getElementById('dc-preloader');
     if (!pl) return;
@@ -276,7 +303,7 @@ function App() {
   const clearCart = () => setCart([]);
   const logout = () => { setUser(null); setToken(null); nav('home'); };
 
-  const ctx = { user, setUser, token, setToken, cart, cartTotal, cartCount, addToCart, updateQty, clearCart, setCartOpen, nav, logout, pageData };
+  const ctx = { user, setUser, token, setToken, cart, cartTotal, cartCount, addToCart, updateQty, clearCart, setCartOpen, nav, logout, pageData, theme, toggleTheme };
 
   return (
     <ToastProvider>
@@ -317,7 +344,12 @@ function App() {
             </div>
           </div>
         </div>
-        <div style={{borderTop:'1px solid #1a1a1a',paddingTop:24,textAlign:'center',color:'#333',fontSize:11,letterSpacing:2}}>© 2026 Dead Concrete. All rights reserved.</div>
+        <div style={{borderTop:'1px solid #1a1a1a',paddingTop:24,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,color:'#333',fontSize:11,letterSpacing:2}}>
+          <span>© 2026 Dead Concrete. All rights reserved.</span>
+          <a href="https://softvara.com" target="_blank" rel="noopener" style={{color:'#555',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:6,transition:'color .2s'}} onMouseEnter={e=>e.currentTarget.style.color='#c0392b'} onMouseLeave={e=>e.currentTarget.style.color='#555'}>
+            POWERED BY <strong style={{color:'#888',letterSpacing:3}}>SOFTVARA</strong>
+          </a>
+        </div>
       </footer>
     </div>
     </ToastProvider>
@@ -325,31 +357,43 @@ function App() {
 }
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
-function Nav({ user, nav, page, cartCount, setCartOpen, cartOpen, logout }) {
+function Nav({ user, nav, page, cartCount, setCartOpen, cartOpen, logout, theme, toggleTheme }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const links = [['home','Home'],['shop','Shop'],['track','Track Order'],['contact','Get a Quote']];
   if (user?.role==='admin') links.push(['admin','Admin']);
+  const navBg = theme==='light' ? '#fff' : '#111';
+  const navMobileBg = theme==='light' ? '#fff' : '#111';
 
   return (
-    <nav style={{background:'#111',borderBottom:'3px solid #c0392b',position:'sticky',top:0,zIndex:100}}>
+    <nav style={{background:navBg,borderBottom:'3px solid #c0392b',position:'sticky',top:0,zIndex:100,transition:'background .4s'}}>
       <div style={{maxWidth:1200,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:64,position:'relative'}}>
         <div onClick={()=>nav('home')} style={{cursor:'pointer',display:'flex',alignItems:'center'}}>
-          <img src="/logo.png" alt="Dead Concrete" style={{height:44,width:'auto',display:'block',filter:'invert(1)',mixBlendMode:'screen'}} />
+          <img src="/logo.png" alt="Dead Concrete" className="ambient-pulse" style={{height:44,width:'auto',display:'block',filter:theme==='light'?'none':'invert(1)',mixBlendMode:theme==='light'?'normal':'screen'}} />
         </div>
         <button className="hamburger" onClick={()=>setMenuOpen(o=>!o)} aria-label="Menu">
-          <span style={{transform:menuOpen?'rotate(45deg) translate(5px,5px)':'none'}} /><span style={{opacity:menuOpen?0:1}} /><span style={{transform:menuOpen?'rotate(-45deg) translate(5px,-5px)':'none'}} />
+          <span style={{transform:menuOpen?'rotate(45deg) translate(5px,5px)':'none',background:theme==='light'?'#0a0a0a':'#fff'}} /><span style={{opacity:menuOpen?0:1,background:theme==='light'?'#0a0a0a':'#fff'}} /><span style={{transform:menuOpen?'rotate(-45deg) translate(5px,-5px)':'none',background:theme==='light'?'#0a0a0a':'#fff'}} />
         </button>
-        <div className={`nav-links${menuOpen?' open':''}`}>
-          {links.map(([p,l]) => <span key={p} className="nav-link" onClick={()=>{nav(p);setMenuOpen(false);}} style={{color:page===p?'#fff':'#666',borderBottom:page===p?'2px solid #c0392b':'2px solid transparent'}}>{l}</span>)}
+        <div className={`nav-links${menuOpen?' open':''}`} style={{background:navMobileBg}}>
+          {links.map(([p,l]) => <span key={p} className="nav-link" onClick={()=>{nav(p);setMenuOpen(false);}} style={{color:page===p?(theme==='light'?'#0a0a0a':'#fff'):'#888',borderBottom:page===p?'2px solid #c0392b':'2px solid transparent'}}>{l}</span>)}
+          {/* Sign In / Sign Out shown inside the mobile menu */}
+          <div className="nav-mobile-only" style={{display:'none',gap:10,paddingTop:14,borderTop:'1px solid #1e1e1e',marginTop:6}}>
+            {user
+              ? <><button className="btn btn-outline" style={{flex:1}} onClick={()=>{nav('account');setMenuOpen(false);}}>{user.name.split(' ')[0]?.toUpperCase()}</button><button className="btn btn-ghost" onClick={()=>{logout();setMenuOpen(false);}}>SIGN OUT</button></>
+              : <button className="btn btn-primary" style={{flex:1}} onClick={()=>{nav('account');setMenuOpen(false);}}>SIGN IN</button>
+            }
+          </div>
         </div>
         <div className="nav-actions" style={{display:'flex',gap:10,alignItems:'center'}}>
-          <button className="btn btn-outline" style={{padding:'7px 14px',position:'relative'}} onClick={()=>setCartOpen(o=>!o)}>
-            🛒 {cartCount>0&&<span style={{position:'absolute',top:-8,right:-8,background:'#c0392b',borderRadius:'50%',width:20,height:20,fontSize:11,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center',animation:'pulse .5s ease 1'}}>{cartCount}</span>}
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme" title={theme==='light'?'Switch to dark':'Switch to soft'}>{theme==='light'?'🌙':'☀'}</button>
+          <button className="btn btn-outline" style={{padding:'7px 12px',position:'relative'}} onClick={()=>setCartOpen(o=>!o)} aria-label="Cart">
+            🛒 {cartCount>0&&<span style={{position:'absolute',top:-8,right:-8,background:'#c0392b',color:'#fff',borderRadius:'50%',width:20,height:20,fontSize:11,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center',animation:'pulse .5s ease 1'}}>{cartCount}</span>}
           </button>
-          {user
-            ? <><button className="btn btn-ghost" onClick={()=>nav('account')}>{user.name.split(' ')[0]}</button><button className="btn btn-outline" style={{padding:'7px 14px'}} onClick={logout}>↩</button></>
-            : <button className="btn btn-primary" onClick={()=>nav('account')}>Sign In</button>
-          }
+          <span className="nav-signin-text">
+            {user
+              ? <><button className="btn btn-ghost" onClick={()=>nav('account')}>{user.name.split(' ')[0]}</button><button className="btn btn-outline" style={{padding:'7px 14px'}} onClick={logout}>↩</button></>
+              : <button className="btn btn-primary" onClick={()=>nav('account')}>Sign In</button>
+            }
+          </span>
         </div>
       </div>
     </nav>
@@ -412,7 +456,7 @@ function HomePage({ nav, addToCart }) {
         <div style={{position:'absolute',width:700,height:700,background:'radial-gradient(circle,rgba(192,57,43,.1) 0%,transparent 70%)',top:'50%',left:'50%',transform:'translate(-50%,-50%)',animation:'breathe 6s ease-in-out infinite'}} />
         <div style={{textAlign:'center',position:'relative',zIndex:2,maxWidth:920}} className="fade-up">
           <div style={{display:'inline-block',background:'#c0392b',padding:'4px 18px',fontSize:10,fontWeight:900,letterSpacing:5,marginBottom:28}}>STREET-BORN · HAND-PRINTED</div>
-          <h1 style={{fontWeight:900,fontSize:'clamp(52px,11vw,115px)',lineHeight:.88,letterSpacing:-3,textTransform:'uppercase',marginBottom:28}}>BUILT<br/><span style={{color:'#c0392b',WebkitTextStroke:'2px #c0392b',WebkitTextFillColor:'transparent'}}>RAW.</span><br/>BUILT HARD.</h1>
+          <h1 className="hero-glow" style={{fontWeight:900,fontSize:'clamp(52px,11vw,115px)',lineHeight:.88,letterSpacing:-3,textTransform:'uppercase',marginBottom:28}}>BUILT<br/><span style={{color:'#c0392b',WebkitTextStroke:'2px #c0392b',WebkitTextFillColor:'transparent'}}>RAW.</span><br/>BUILT HARD.</h1>
           <p style={{color:'#777',fontSize:18,fontFamily:'Barlow',maxWidth:520,margin:'0 auto 44px',lineHeight:1.7}}>Streetwear forged from the cracks. Heavyweight tees, raglan crops, hand-printed. No shortcuts.</p>
           <div style={{display:'flex',gap:16,justifyContent:'center',flexWrap:'wrap'}}>
             <button className="btn btn-primary" style={{fontSize:17,padding:'17px 44px'}} onClick={()=>nav('shop')}>SHOP NOW</button>

@@ -30,6 +30,20 @@
     @keyframes ambientPulseLight{0%,100%{filter:drop-shadow(0 0 0 rgba(192,57,43,.5))}50%{filter:drop-shadow(0 0 22px rgba(192,57,43,.55))}}
     .ambient-pulse{animation:ambientPulseDark 4s ease infinite}
     body[data-theme="light"] .ambient-pulse{animation:ambientPulseLight 4s ease infinite}
+    /* Scroll progress bar */
+    .scroll-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#c0392b 0%,#f7941d 50%,#c0392b 100%);z-index:9998;transition:width .1s ease-out;box-shadow:0 0 12px rgba(192,57,43,.6);pointer-events:none}
+    /* Parallax — JS sets --scroll-y on :root; elements use it for transform */
+    .parallax-slow{transform:translate3d(0,calc(var(--scroll-y,0px) * 0.35),0);will-change:transform}
+    .parallax-med{transform:translate3d(0,calc(var(--scroll-y,0px) * 0.22),0);will-change:transform}
+    /* Image zoom on product card hover */
+    .pc{overflow:hidden}
+    .pc .product-img{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+    .pc:hover .product-img{transform:scale(1.06)}
+    @media(prefers-reduced-motion:reduce){
+      .parallax-slow,.parallax-med{transform:none !important}
+      .ambient-pulse{animation:none}
+      .scroll-progress{transition:none}
+    }
     /* Theme toggle */
     .theme-toggle{background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .25s}
     .theme-toggle:hover{color:#fff;border-color:#c0392b;transform:rotate(20deg)}
@@ -268,6 +282,23 @@ function App() {
   React.useEffect(() => { document.body.setAttribute('data-theme', theme); }, [theme]);
   const toggleTheme = () => setTheme(t => t==='dark'?'light':'dark');
 
+  // Scroll progress + parallax CSS variable
+  const [scrollPct, setScrollPct] = React.useState(0);
+  React.useEffect(() => {
+    let rafId = 0;
+    const tick = () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = total > 0 ? Math.min(100, (window.scrollY / total) * 100) : 0;
+      setScrollPct(pct);
+      document.documentElement.style.setProperty('--scroll-y', `${window.scrollY}px`);
+      rafId = 0;
+    };
+    const onScroll = () => { if (!rafId) rafId = requestAnimationFrame(tick); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    tick();
+    return () => { window.removeEventListener('scroll', onScroll); if (rafId) cancelAnimationFrame(rafId); };
+  }, []);
+
   React.useEffect(() => {
     const pl = document.getElementById('dc-preloader');
     if (!pl) return;
@@ -315,6 +346,7 @@ function App() {
   return (
     <ToastProvider>
     <div>
+      <div className="scroll-progress" style={{width:`${scrollPct}%`}} />
       <Nav {...ctx} cartOpen={cartOpen} page={page} />
       {cartOpen && <CartDrawer cart={cart} total={cartTotal} updateQty={updateQty} onClose={()=>setCartOpen(false)} onCheckout={()=>{setCartOpen(false);nav('checkout');}} />}
       <main>
@@ -463,8 +495,8 @@ function HomePage({ nav, addToCart }) {
     <div>
       {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <section style={{background:'linear-gradient(135deg,#0a0a0a 0%,#180808 50%,#0a0a0a 100%)',minHeight:'88vh',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden',padding:'60px 20px'}}>
-        <div style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px),repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px)'}} />
-        <div style={{position:'absolute',width:700,height:700,background:'radial-gradient(circle,rgba(192,57,43,.1) 0%,transparent 70%)',top:'50%',left:'50%',transform:'translate(-50%,-50%)',animation:'breathe 6s ease-in-out infinite'}} />
+        <div className="parallax-slow" style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px),repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px)'}} />
+        <div className="parallax-med" style={{position:'absolute',width:700,height:700,background:'radial-gradient(circle,rgba(192,57,43,.1) 0%,transparent 70%)',top:'50%',left:'50%',marginLeft:-350,marginTop:-350,animation:'breathe 6s ease-in-out infinite'}} />
         <div style={{textAlign:'center',position:'relative',zIndex:2,maxWidth:920}} className="fade-up">
           <div style={{display:'inline-block',background:'#c0392b',padding:'4px 18px',fontSize:10,fontWeight:900,letterSpacing:5,marginBottom:28}}>STREET-BORN · HAND-PRINTED</div>
           <h1 className="hero-glow" style={{fontWeight:900,fontSize:'clamp(52px,11vw,115px)',lineHeight:.88,letterSpacing:-3,textTransform:'uppercase',marginBottom:28}}>BUILT<br/><span style={{color:'#c0392b',WebkitTextStroke:'2px #c0392b',WebkitTextFillColor:'transparent'}}>RAW.</span><br/>BUILT HARD.</h1>

@@ -322,7 +322,7 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const reset = params.get('reset');
     return reset ? { resetToken: reset } : {};
-  });
+  });8 
 
   const nav = (p, data={}) => { setPage(p); setPageData(data); setCartOpen(false); window.scrollTo(0,0); };
   const cartCount = cart.reduce((s,i) => s+i.qty, 0);
@@ -498,9 +498,10 @@ function HomePage({ nav, addToCart }) {
         <div className="parallax-slow" style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px),repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px)'}} />
         <div className="parallax-med" style={{position:'absolute',width:700,height:700,background:'radial-gradient(circle,rgba(192,57,43,.1) 0%,transparent 70%)',top:'50%',left:'50%',marginLeft:-350,marginTop:-350,animation:'breathe 6s ease-in-out infinite'}} />
         <div style={{textAlign:'center',position:'relative',zIndex:2,maxWidth:920}} className="fade-up">
-          <div style={{display:'inline-block',background:'#c0392b',padding:'4px 18px',fontSize:10,fontWeight:900,letterSpacing:5,marginBottom:28}}>STREET-BORN · HAND-PRINTED</div>
-          <h1 className="hero-glow" style={{fontWeight:900,fontSize:'clamp(52px,11vw,115px)',lineHeight:.88,letterSpacing:-3,textTransform:'uppercase',marginBottom:28}}>BUILT<br/><span style={{color:'#c0392b',WebkitTextStroke:'2px #c0392b',WebkitTextFillColor:'transparent'}}>RAW.</span><br/>BUILT HARD.</h1>
-          <p style={{color:'#777',fontSize:18,fontFamily:'Barlow',maxWidth:520,margin:'0 auto 44px',lineHeight:1.7}}>Streetwear forged from the cracks. Heavyweight tees, raglan crops, hand-printed. No shortcuts.</p>
+          <div style={{display:'inline-block',background:'#c0392b',padding:'4px 18px',fontSize:10,fontWeight:900,letterSpacing:5,marginBottom:28}}>DEAD CONCRETE</div>
+          <h1 className="hero-glow" style={{fontWeight:900,fontSize:'clamp(52px,11vw,115px)',lineHeight:.88,letterSpacing:-3,textTransform:'uppercase',marginBottom:28}}>GRIT<br/><span style={{color:'#c0392b',WebkitTextStroke:'2px #c0392b',WebkitTextFillColor:'transparent'}}>NEVER</span><br/>DIES.</h1>
+          <p style={{color:'#888',fontSize:17,fontFamily:'Barlow',maxWidth:620,margin:'0 auto 20px',lineHeight:1.75}}>Streetwear born from resilience and ambition. Forged from the cracks of the concrete and built for those who refuse to quit.</p>
+          <p style={{color:'#666',fontSize:15,fontFamily:'Barlow',maxWidth:560,margin:'0 auto 44px',lineHeight:1.7,letterSpacing:.3}}>Heavyweight tees. Bold graphics. Premium quality. <span style={{color:'#c0392b',fontWeight:700}}>No compromises.</span></p>
           <div style={{display:'flex',gap:16,justifyContent:'center',flexWrap:'wrap'}}>
             <button className="btn btn-primary" style={{fontSize:17,padding:'17px 44px'}} onClick={()=>nav('shop')}>SHOP NOW</button>
             <button className="btn btn-outline" style={{fontSize:17,padding:'17px 44px'}} onClick={()=>nav('track')}>TRACK ORDER</button>
@@ -527,8 +528,8 @@ function HomePage({ nav, addToCart }) {
           <div className="reveal">
             <span className="section-tag">THE MANIFESTO</span>
             <h2 style={{fontWeight:900,fontSize:'clamp(40px,5.5vw,68px)',letterSpacing:-2,lineHeight:.95,marginBottom:28}}>MORE THAN A NAME — <span className="shimmer-text">A MINDSET.</span></h2>
-            <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:18}}>Concrete is the hardest surface we know. Even when it looks dead or broken, it still stands. Dead Concrete represents <strong style={{color:'#fff'}}>strength, survival, and growth through struggle.</strong></p>
-            <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:32}}>Just like plants break through concrete, greatness rises from the hardest places. This is for those who come from the streets, face the pressure, and still find a way to <em style={{color:'#c0392b',fontStyle:'normal',fontWeight:800}}>shine</em>.</p>
+            <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:18}}>Dead Concrete is more than a name — it's a mindset. Concrete is the hardest surface we know, and even when it looks dead or broken, it still stands. My brand represents <strong style={{color:'#fff'}}>strength, survival, and growth through struggle.</strong></p>
+            <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:32}}>Just like plants break through concrete, I believe greatness can rise from the hardest places. Dead Concrete is for those who come from the streets, face the pressure, and still find a way to <em style={{color:'#c0392b',fontStyle:'normal',fontWeight:800}}>shine</em>.</p>
             <div style={{borderLeft:'3px solid #c0392b',paddingLeft:20}}>
               <div style={{color:'#888',fontFamily:'Barlow',fontSize:12,letterSpacing:3,textTransform:'uppercase',marginBottom:6}}>— FOUNDER'S NOTE</div>
               <div style={{fontWeight:800,fontSize:18,color:'#fff',lineHeight:1.5}}>"Greatness rises from the hardest places."</div>

@@ -690,23 +690,36 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
     finally { setLoading(false); }
   };
 
+  const openPaystackPopup = async (channels) => {
+    if (!config?.paystackPublicKey) { setError('Payment not ready — please refresh.'); return; }
+    const { orderId: oid, total } = await api.post('/payments/bank', {
+      items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
+      shipping, guestEmail: shipping.email,
+    });
+    const handler = PaystackPop.setup({
+      key: config.paystackPublicKey,
+      email: shipping.email,
+      amount: Math.round(total * 100),
+      currency: 'GHS',
+      ref: oid,
+      channels,
+      metadata: { orderId: oid, customer_phone: momoPhone || shipping.phone },
+      callback: (response) => {
+        // Paystack popup handled the wallet auth (OTP/PIN); now verify on our server
+        api.get(`/payments/verify/${response.reference}`).catch(()=>{});
+        setOrderId(oid); setPayStatus('confirmed'); clearCart(); setLoading(false);
+      },
+      onClose: () => setLoading(false),
+    });
+    handler.openIframe();
+  };
+
   const placeOrder = async () => {
     setLoading(true); setError('');
     try {
       if (payMethod === 'momo') {
-        if (!momoPhone.trim()) { setError('Enter your MoMo phone number.'); return; }
-        const { orderId: oid, reference, displayText, paystackStatus } = await api.post('/payments/momo', {
-          items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
-          shipping, guestEmail: shipping.email,
-          phone: momoPhone.trim(), provider: momoNetwork,
-        });
-        setOrderId(oid); setMomoDisplayText(displayText); setMomoReference(reference); clearCart();
-        if (paystackStatus === 'send_otp') {
-          setOtpRequired(true); setPayStatus('momo_otp');
-        } else {
-          setPayStatus('momo_pending');
-          startPolling(reference);
-        }
+        await openPaystackPopup(['mobile_money']);
+        return;
       } else if (payMethod === 'bank') {
         const { orderId: oid } = await api.post('/payments/bank', {
           items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
@@ -714,28 +727,7 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
         });
         setOrderId(oid); setPayStatus('bank_pending'); clearCart();
       } else if (payMethod === 'card') {
-        if (!config?.paystackPublicKey) { setError('Payment not ready — please refresh.'); return; }
-        const { orderId: oid, total } = await api.post('/payments/bank', {
-          items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
-          shipping, guestEmail: shipping.email,
-        });
-        const handler = PaystackPop.setup({
-          key: config.paystackPublicKey,
-          email: shipping.email,
-          amount: Math.round(total * 100),
-          currency: 'GHS',
-          ref: oid,
-          metadata: { orderId: oid },
-          callback: async (response) => {
-            try {
-              await api.get(`/payments/verify/${response.reference}`);
-              setOrderId(oid); setPayStatus('confirmed'); clearCart();
-            } catch(e) { setError(e.message); }
-            finally { setLoading(false); }
-          },
-          onClose: () => setLoading(false),
-        });
-        handler.openIframe();
+        await openPaystackPopup(['card']);
         return;
       }
     } catch(e) { setError(e.message); }
@@ -925,25 +917,16 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
                 </div>
               ))}
 
-              {/* MoMo form */}
+              {/* MoMo — handled by Paystack hosted popup */}
               {payMethod==='momo'&&(
-                <div className="fade-up" style={{marginTop:20,padding:24,background:'#0d0805',border:'1px solid #2a1a00'}}>
-                  <label className="label">YOUR MOMO PHONE NUMBER</label>
-                  <input className="input" placeholder="e.g. 0551234567" value={momoPhone} onChange={e=>setMomoPhone(e.target.value)} style={{marginBottom:18,fontSize:16,letterSpacing:1}} />
-                  <label className="label">NETWORK</label>
-                  <div style={{display:'flex',gap:10}}>
-                    {[
-                      {code:'mtn',name:'MTN',sub:'Mobile Money',color:'#f7941d'},
-                      {code:'vod',name:'Telecel',sub:'Cash',color:'#e60000'},
-                      {code:'tgo',name:'AT',sub:'Money',color:'#0066cc'},
-                    ].map(n=>(
-                      <button key={n.code} onClick={()=>setMomoNetwork(n.code)} className={`co-net-card${momoNetwork===n.code?' active':''}`} style={momoNetwork===n.code?{borderColor:n.color,background:`${n.color}15`}:{}}>
-                        <div style={{fontWeight:900,fontSize:14,color:momoNetwork===n.code?n.color:'#888'}}>{n.name}</div>
-                        <div style={{fontSize:10,color:'#555',marginTop:2,letterSpacing:1}}>{n.sub}</div>
-                      </button>
-                    ))}
+                <div className="fade-up" style={{marginTop:20,padding:24,background:'#0d0805',border:'1px solid #2a1a00',textAlign:'center'}}>
+                  <div style={{display:'flex',gap:14,justifyContent:'center',marginBottom:14,fontSize:22}}>
+                    <span style={{color:'#f7941d'}}>📱</span>
+                    <span style={{color:'#e60000'}}>📱</span>
+                    <span style={{color:'#0066cc'}}>📱</span>
                   </div>
-                  <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:12,marginTop:14,lineHeight:1.5}}>💡 After you tap "PAY NOW", you'll get a prompt on your phone. Enter your MoMo PIN to approve.</p>
+                  <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:14,lineHeight:1.6,margin:'0 auto 8px',maxWidth:380}}>Tap <strong>PAY NOW</strong> below. Paystack opens a secure popup where you'll enter your MoMo number, get the OTP, and approve the payment with your wallet PIN.</p>
+                  <p style={{color:'#666',fontFamily:'Barlow',fontSize:12,letterSpacing:1.5,textTransform:'uppercase'}}>MTN · Telecel · AirtelTigo</p>
                 </div>
               )}
 
@@ -1006,7 +989,7 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
               <div>
                 <div className="label" style={{marginBottom:6}}>PAYMENT METHOD</div>
                 <p style={{fontFamily:'Barlow',color:'#ccc',margin:0,fontSize:14}}>
-                  {payMethod==='momo' ? `📱 Mobile Money · ${momoPhone||'(no number)'} (${momoNetwork.toUpperCase()})`
+                  {payMethod==='momo' ? '📱 Mobile Money via Paystack (MTN · Telecel · AirtelTigo)'
                     : payMethod==='bank' ? `🏦 Bank Transfer · ${config?.bank?.name||'GCB'}`
                     : '💳 Card via Paystack'}
                 </p>

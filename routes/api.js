@@ -268,18 +268,39 @@ router.post('/payments/momo', async (req, res) => {
     });
 
     const chargeData = await chargeRes.json();
+    console.log('[Paystack /charge] HTTP', chargeRes.status, JSON.stringify(chargeData));
+
+    // chargeData.status is the API-call success flag, not the payment status
     if (!chargeData.status) {
-      return res.status(400).json({ error: chargeData.message || 'Payment initiation failed' });
+      return res.status(400).json({ error: chargeData.message || 'Payment initiation failed', paystack: chargeData });
     }
 
-    const reference = chargeData.data.reference;
+    const inner = chargeData.data || {};
+    const innerStatus = inner.status; // 'pending' | 'send_otp' | 'pay_offline' | 'success' | 'failed'
+
+    // Hard fails — no prompt will be sent
+    if (innerStatus === 'failed') {
+      return res.status(400).json({
+        error: inner.message || inner.gateway_response || 'Mobile Money collection rejected by Paystack. Confirm MoMo is enabled on your live account.',
+        paystackStatus: innerStatus,
+        paystack: inner,
+      });
+    }
+
+    const reference = inner.reference;
     db.prepare(`UPDATE orders SET stripe_payment_intent=? WHERE id=?`).run(reference, orderId);
     db.prepare('INSERT INTO order_status_history (id,order_id,status,note) VALUES (?,?,?,?)')
-      .run(uuid(), orderId, 'Awaiting Payment', `Paystack MoMo initiated — ref: ${reference}`);
+      .run(uuid(), orderId, 'Awaiting Payment', `Paystack MoMo (${innerStatus}) — ref: ${reference}`);
 
     res.status(201).json({
       orderId, reference, total: subtotal,
-      displayText: chargeData.data.display_text || 'Approve the payment request in your MoMo app.',
+      paystackStatus: innerStatus,
+      displayText: inner.display_text
+        || (innerStatus === 'pay_offline'
+            ? `Dial ${provider === 'mtn' ? '*170#' : provider === 'tgo' ? '*110#' : '*110#'} on your phone → My Wallet → Approvals to complete.`
+            : innerStatus === 'send_otp'
+            ? 'Paystack sent an OTP to your phone. Watch for the SMS.'
+            : 'Approve the payment prompt on your phone.'),
     });
   } finally { db.close(); }
 });

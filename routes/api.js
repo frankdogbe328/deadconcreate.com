@@ -187,28 +187,34 @@ router.get('/products', (req, res) => {
   } finally { db.close(); }
 });
 
+const cleanSizes = (raw) => {
+  if (!raw) return 'S,M,L,XL,XXL';
+  return String(raw).split(',').map(s => s.trim().toUpperCase()).filter(Boolean).join(',') || 'S,M,L,XL,XXL';
+};
+
 router.post('/products', requireAdmin, upload.single('image'), (req, res) => {
-  const { name, category, price, description, badge, accent_color } = req.body;
+  const { name, category, price, description, badge, accent_color, sizes } = req.body;
   if (!name || !category || !price) return res.status(400).json({ error: 'Name, category and price required' });
   const db = getDb();
   try {
     const id = uuid();
     const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : null;
-    db.prepare('INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url) VALUES (?,?,?,?,?,?,?,?)')
-      .run(id, name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', imageUrl);
+    db.prepare('INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?)')
+      .run(id, name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', imageUrl, cleanSizes(sizes));
     res.status(201).json(db.prepare('SELECT * FROM products WHERE id=?').get(id));
   } finally { db.close(); }
 });
 
 router.put('/products/:id', requireAdmin, upload.single('image'), (req, res) => {
-  const { name, category, price, description, badge, accent_color, in_stock } = req.body;
+  const { name, category, price, description, badge, accent_color, in_stock, sizes } = req.body;
   const db = getDb();
   try {
     const existing = db.prepare('SELECT * FROM products WHERE id=?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Product not found' });
     const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : existing.image_url;
-    db.prepare("UPDATE products SET name=?,category=?,price=?,description=?,badge=?,accent_color=?,in_stock=?,image_url=?,updated_at=datetime('now') WHERE id=?")
-      .run(name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', in_stock ?? 1, imageUrl, req.params.id);
+    const sz = sizes !== undefined ? cleanSizes(sizes) : (existing.sizes || 'S,M,L,XL,XXL');
+    db.prepare("UPDATE products SET name=?,category=?,price=?,description=?,badge=?,accent_color=?,in_stock=?,image_url=?,sizes=?,updated_at=datetime('now') WHERE id=?")
+      .run(name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', in_stock ?? 1, imageUrl, sz, req.params.id);
     res.json(db.prepare('SELECT * FROM products WHERE id=?').get(req.params.id));
   } finally { db.close(); }
 });
@@ -236,7 +242,7 @@ router.post('/payments/momo', async (req, res) => {
       if (!p) return res.status(400).json({ error: `Product not found: ${item.productId}` });
       const t = p.price * item.quantity;
       subtotal += t;
-      validated.push({ p, quantity: item.quantity, t });
+      validated.push({ p, quantity: item.quantity, t, size: item.size || null });
     }
 
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
@@ -250,9 +256,9 @@ router.post('/payments/momo', async (req, res) => {
         shipping.name, shipping.address, shipping.city, shipping.zip, shipping.phone||null,
         'pending', 'Awaiting Payment');
 
-    for (const { p, quantity, t } of validated) {
-      db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price) VALUES (?,?,?,?,?,?,?)')
-        .run(uuid(), orderId, p.id, p.name, quantity, p.price, t);
+    for (const { p, quantity, t, size } of validated) {
+      db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price,size) VALUES (?,?,?,?,?,?,?,?)')
+        .run(uuid(), orderId, p.id, p.name, quantity, p.price, t, size || null);
     }
 
     const chargeRes = await fetch('https://api.paystack.co/charge', {
@@ -346,7 +352,7 @@ router.post('/payments/paystack', async (req, res) => {
       if (!p) return res.status(400).json({ error: `Product not found: ${item.productId}` });
       const t = p.price * item.quantity;
       subtotal += t;
-      validated.push({ p, quantity: item.quantity, t });
+      validated.push({ p, quantity: item.quantity, t, size: item.size || null });
     }
 
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
@@ -360,9 +366,9 @@ router.post('/payments/paystack', async (req, res) => {
         shipping.name, shipping.address, shipping.city, shipping.zip, shipping.phone||null,
         'pending', 'Awaiting Payment');
 
-    for (const { p, quantity, t } of validated) {
-      db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price) VALUES (?,?,?,?,?,?,?)')
-        .run(uuid(), orderId, p.id, p.name, quantity, p.price, t);
+    for (const { p, quantity, t, size } of validated) {
+      db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price,size) VALUES (?,?,?,?,?,?,?,?)')
+        .run(uuid(), orderId, p.id, p.name, quantity, p.price, t, size || null);
     }
 
     const chargeRes = await fetch('https://api.paystack.co/charge', {
@@ -411,7 +417,7 @@ router.post('/payments/bank', async (req, res) => {
       if (!p) return res.status(400).json({ error: `Product not found: ${item.productId}` });
       const t = p.price * item.quantity;
       subtotal += t;
-      validated.push({ p, quantity: item.quantity, t });
+      validated.push({ p, quantity: item.quantity, t, size: item.size || null });
     }
 
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
@@ -424,9 +430,9 @@ router.post('/payments/bank', async (req, res) => {
         shipping.name, shipping.address, shipping.city, shipping.zip, shipping.phone||null,
         'momo_pending', 'Pending Payment');
 
-    for (const { p, quantity, t } of validated) {
-      db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price) VALUES (?,?,?,?,?,?,?)')
-        .run(uuid(), orderId, p.id, p.name, quantity, p.price, t);
+    for (const { p, quantity, t, size } of validated) {
+      db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price,size) VALUES (?,?,?,?,?,?,?,?)')
+        .run(uuid(), orderId, p.id, p.name, quantity, p.price, t, size || null);
     }
 
     db.prepare('INSERT INTO order_status_history (id,order_id,status,note) VALUES (?,?,?,?)')

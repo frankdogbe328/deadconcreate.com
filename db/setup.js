@@ -28,6 +28,7 @@ db.exec(`
     description TEXT, badge TEXT,
     accent_color TEXT DEFAULT '#c0392b',
     image_url TEXT, in_stock INTEGER DEFAULT 1,
+    sizes TEXT DEFAULT 'S,M,L,XL,XXL',
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -47,7 +48,8 @@ db.exec(`
     id TEXT PRIMARY KEY, order_id TEXT NOT NULL,
     product_id TEXT NOT NULL, product_name TEXT NOT NULL,
     quantity INTEGER NOT NULL, unit_price REAL NOT NULL,
-    total_price REAL NOT NULL
+    total_price REAL NOT NULL,
+    size TEXT
   );
   CREATE TABLE IF NOT EXISTS order_status_history (
     id TEXT PRIMARY KEY, order_id TEXT NOT NULL,
@@ -76,6 +78,8 @@ const migrate = (sql) => { try { db.exec(sql); } catch (e) { if (!/duplicate col
 migrate(`ALTER TABLE users ADD COLUMN google_id TEXT`);
 migrate(`ALTER TABLE users ADD COLUMN reset_token TEXT`);
 migrate(`ALTER TABLE users ADD COLUMN reset_token_expires_at TEXT`);
+migrate(`ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT 'S,M,L,XL,XXL'`);
+migrate(`ALTER TABLE order_items ADD COLUMN size TEXT`);
 
 // Wipe and reseed
 db.exec(`
@@ -118,11 +122,12 @@ const products = [
   { name:'Girls Stand Top — Black Body',     cat:'tops',         price:150, desc:'Fitted raglan crop tee. Black body with pastel yellow sleeves and chain-stitched "Dead Concrete" varsity script.',                                              badge:null,         color:'#111111', img:'/uploads/products/standtops1.jpeg' },
 ];
 
-const ins = db.prepare(`INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url) VALUES (?,?,?,?,?,?,?,?)`);
+const ins = db.prepare(`INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?)`);
 const productIds = [];
 for (const p of products) {
   const id = uuid();
-  ins.run(id, p.name, p.cat, p.price, p.desc, p.badge || null, p.color, p.img || null);
+  const sizes = p.cat === 'tops' ? 'XS,S,M,L' : 'S,M,L,XL,XXL';
+  ins.run(id, p.name, p.cat, p.price, p.desc, p.badge || null, p.color, p.img || null, sizes);
   productIds.push({ id, ...p });
 }
 

@@ -305,6 +305,30 @@ router.post('/payments/momo', async (req, res) => {
   } finally { db.close(); }
 });
 
+// ── PAYSTACK MOMO — Submit OTP (after send_otp) ──────────────────────────────
+router.post('/payments/momo/otp', async (req, res) => {
+  const { reference, otp } = req.body || {};
+  if (!reference || !otp) return res.status(400).json({ error: 'Reference and OTP required' });
+
+  const r = await fetch('https://api.paystack.co/charge/submit_otp', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reference, otp: String(otp).trim() }),
+  });
+  const data = await r.json();
+  console.log('[Paystack submit_otp] HTTP', r.status, JSON.stringify(data));
+
+  if (!data.status) {
+    return res.status(400).json({ error: data.message || 'OTP submission failed', paystack: data });
+  }
+  const inner = data.data || {};
+  res.json({
+    paystackStatus: inner.status,
+    displayText: inner.display_text || (inner.status === 'pending' ? 'Approve the prompt on your phone now.' : inner.gateway_response || 'Submitted.'),
+    paystack: inner,
+  });
+});
+
 // ── PAYSTACK MOMO (automated — customer enters phone, gets USSD prompt) ──────
 
 router.post('/payments/paystack', async (req, res) => {

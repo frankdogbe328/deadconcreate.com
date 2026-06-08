@@ -648,6 +648,9 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
   const [momoPhone, setMomoPhone] = React.useState('');
   const [momoNetwork, setMomoNetwork] = React.useState('mtn');
   const [momoDisplayText, setMomoDisplayText] = React.useState('');
+  const [momoReference, setMomoReference] = React.useState('');
+  const [otpRequired, setOtpRequired] = React.useState(false);
+  const [otpValue, setOtpValue] = React.useState('');
   const [config, setConfig] = React.useState(null);
   const pollRef = React.useRef(null);
   const api = useApi();
@@ -669,18 +672,41 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
     }, 5000);
   };
 
+  const submitOtp = async () => {
+    if (!otpValue.trim()) { setError('Enter the OTP you received by SMS.'); return; }
+    setLoading(true); setError('');
+    try {
+      const { paystackStatus, displayText } = await api.post('/payments/momo/otp', { reference: momoReference, otp: otpValue.trim() });
+      setMomoDisplayText(displayText || 'Approve the MoMo prompt on your phone.');
+      if (paystackStatus === 'success') {
+        setPayStatus('confirmed');
+      } else {
+        setOtpRequired(false);
+        setOtpValue('');
+        setPayStatus('momo_pending');
+        startPolling(momoReference);
+      }
+    } catch(e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
   const placeOrder = async () => {
     setLoading(true); setError('');
     try {
       if (payMethod === 'momo') {
         if (!momoPhone.trim()) { setError('Enter your MoMo phone number.'); return; }
-        const { orderId: oid, reference, displayText } = await api.post('/payments/momo', {
+        const { orderId: oid, reference, displayText, paystackStatus } = await api.post('/payments/momo', {
           items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
           shipping, guestEmail: shipping.email,
           phone: momoPhone.trim(), provider: momoNetwork,
         });
-        setOrderId(oid); setMomoDisplayText(displayText); setPayStatus('momo_pending'); clearCart();
-        startPolling(reference);
+        setOrderId(oid); setMomoDisplayText(displayText); setMomoReference(reference); clearCart();
+        if (paystackStatus === 'send_otp') {
+          setOtpRequired(true); setPayStatus('momo_otp');
+        } else {
+          setPayStatus('momo_pending');
+          startPolling(reference);
+        }
       } else if (payMethod === 'bank') {
         const { orderId: oid } = await api.post('/payments/bank', {
           items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
@@ -731,6 +757,27 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
 
   if (orderId) return (
     <div style={{maxWidth:640,margin:'60px auto',padding:20}} className="fade-up">
+      {payStatus==='momo_otp' && (
+        <div className="card" style={{padding:'48px 36px',textAlign:'center',borderTop:'4px solid #f7941d'}}>
+          <div style={{width:96,height:96,background:'#1a1000',border:'3px solid #f7941d',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 28px',fontSize:42}}>🔐</div>
+          <h1 style={{fontWeight:900,fontSize:34,letterSpacing:-1,marginBottom:14,lineHeight:1}}>ENTER THE OTP</h1>
+          <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:15,marginBottom:8,lineHeight:1.6,maxWidth:420,margin:'0 auto 8px'}}>Paystack just sent you an SMS with a 6-digit code. Enter it below — then you'll get the MoMo PIN prompt to actually approve the payment.</p>
+          <p style={{color:'#666',fontFamily:'Barlow',fontSize:13,marginBottom:24}}>Order <strong style={{color:'#fff'}}>{orderId}</strong> · {momoPhone} ({momoNetwork.toUpperCase()})</p>
+          <input
+            className="input"
+            value={otpValue}
+            onChange={e=>setOtpValue(e.target.value.replace(/\D/g,'').slice(0,8))}
+            onKeyDown={e=>e.key==='Enter'&&submitOtp()}
+            placeholder="123456"
+            inputMode="numeric"
+            autoFocus
+            style={{maxWidth:280,margin:'0 auto 18px',fontSize:24,textAlign:'center',letterSpacing:8,fontWeight:900}}
+          />
+          {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:13,marginBottom:14}}>{error}</p>}
+          <button className="btn btn-primary" style={{padding:'14px 36px',fontSize:15,minWidth:220}} onClick={submitOtp} disabled={loading}>{loading?<Spin/>:'SUBMIT OTP →'}</button>
+          <p style={{color:'#444',fontFamily:'Barlow',fontSize:11,marginTop:18,letterSpacing:1.5,textTransform:'uppercase'}}>OTP didn't arrive? Wait 30s, or restart the order.</p>
+        </div>
+      )}
       {payStatus==='momo_pending' && (
         <div className="card" style={{padding:'48px 36px',textAlign:'center',borderTop:'4px solid #f7941d'}}>
           <div style={{width:96,height:96,background:'#1a1000',border:'3px solid #f7941d',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 28px',fontSize:42,animation:'pulse 1.6s ease infinite'}}>📱</div>

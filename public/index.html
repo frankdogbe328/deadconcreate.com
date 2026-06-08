@@ -790,7 +790,14 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
             <div className="spinner" style={{width:16,height:16,borderWidth:2}} />
             <span style={{fontFamily:'Barlow',color:'#888',fontSize:13}}>Waiting for confirmation — this page updates automatically</span>
           </div>
-          <p style={{color:'#444',fontFamily:'Barlow',fontSize:12,marginBottom:24}}>Didn't get a prompt? Dial <strong style={{color:'#fff'}}>*170#</strong> (MTN) → My Wallet → Approvals.</p>
+          <div style={{background:'#0d0d0d',border:'1px solid #f7941d',padding:'14px 18px',marginBottom:24,textAlign:'left',maxWidth:420,margin:'0 auto 24px'}}>
+            <div style={{fontSize:10,letterSpacing:2.5,color:'#f7941d',marginBottom:8,fontWeight:800}}>NO PROMPT? APPROVE MANUALLY</div>
+            <div style={{fontFamily:'Barlow',fontSize:13,color:'#ccc',lineHeight:1.7}}>
+              <div>1. Dial <strong style={{color:'#fff',fontSize:15}}>{momoNetwork==='mtn'?'*170#':momoNetwork==='tgo'?'*110#':'*124#'}</strong> on your phone</div>
+              <div>2. Choose <strong style={{color:'#fff'}}>{momoNetwork==='mtn'?'6. My Wallet → 3. My Approvals':'My Approvals'}</strong></div>
+              <div>3. Approve the Dead Concrete payment, then enter your MoMo PIN</div>
+            </div>
+          </div>
           <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
             <button className="btn btn-outline" onClick={()=>nav('track')}>TRACK ORDER</button>
             <button className="btn btn-ghost" onClick={()=>nav('shop')}>KEEP SHOPPING</button>

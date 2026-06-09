@@ -597,6 +597,57 @@ router.delete('/admin/demo-cleanup', requireAdmin, (req, res) => {
   } finally { db.close(); }
 });
 
+// ── BACKUP / RESTORE ─────────────────────────────────────────────────────────
+// Free-tier Render wipes SQLite on every redeploy. Backup before, restore after.
+const BACKUP_TABLES = ['users','products','orders','order_items','order_status_history','quote_requests','reviews'];
+
+router.get('/admin/backup', requireAdmin, (req, res) => {
+  const db = getDb();
+  try {
+    const snapshot = { version: 1, exportedAt: new Date().toISOString(), tables: {} };
+    for (const t of BACKUP_TABLES) snapshot.tables[t] = db.prepare(`SELECT * FROM ${t}`).all();
+    const filename = `dead-concrete-backup-${new Date().toISOString().slice(0,10)}.json`;
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(JSON.stringify(snapshot, null, 2));
+  } finally { db.close(); }
+});
+
+router.post('/admin/restore', requireAdmin, (req, res) => {
+  const snapshot = req.body;
+  if (!snapshot || !snapshot.tables) return res.status(400).json({ error: 'Invalid snapshot file' });
+  const db = getDb();
+  try {
+    const tx = db.transaction(() => {
+      // Wipe in FK-safe order
+      db.prepare('DELETE FROM order_items').run();
+      db.prepare('DELETE FROM order_status_history').run();
+      db.prepare('DELETE FROM orders').run();
+      db.prepare('DELETE FROM reviews').run();
+      db.prepare('DELETE FROM quote_requests').run();
+      db.prepare('DELETE FROM products').run();
+      // Keep current admin so the operator can still sign in if backup is bad
+      db.prepare("DELETE FROM users WHERE role!='admin'").run();
+
+      for (const t of BACKUP_TABLES) {
+        const rows = snapshot.tables[t] || [];
+        if (!rows.length) continue;
+        const cols = Object.keys(rows[0]);
+        const placeholders = cols.map(()=>'?').join(',');
+        const stmt = db.prepare(`INSERT OR REPLACE INTO ${t} (${cols.join(',')}) VALUES (${placeholders})`);
+        for (const row of rows) stmt.run(...cols.map(c => row[c]));
+      }
+    });
+    tx();
+    const counts = {};
+    for (const t of BACKUP_TABLES) counts[t] = db.prepare(`SELECT COUNT(*) as c FROM ${t}`).get().c;
+    res.json({ success: true, counts });
+  } catch (e) {
+    console.error('Restore failed:', e);
+    res.status(500).json({ error: `Restore failed: ${e.message}` });
+  } finally { db.close(); }
+});
+
 // ── CONTACT / QUOTES ──────────────────────────────────────────────────────────
 
 router.post('/contact', async (req, res) => {

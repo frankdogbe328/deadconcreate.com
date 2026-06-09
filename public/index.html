@@ -351,7 +351,32 @@ function App() {
   const clearCart = () => setCart([]);
   const logout = () => { setUser(null); setToken(null); nav('home'); };
 
-  const ctx = { user, setUser, token, setToken, cart, cartTotal, cartCount, addToCart, updateQty, clearCart, setCartOpen, nav, logout, pageData, theme, toggleTheme };
+  // Re-sync cart with server after login — drop items that disappeared or were hidden, refresh prices.
+  const reconcileCart = async (toast) => {
+    if (!cart.length) return;
+    try {
+      const res = await fetch('/api/products');
+      if (!res.ok) return;
+      const products = await res.json();
+      const removed = [];
+      let priceChanged = 0;
+      const next = cart.reduce((acc, item) => {
+        const p = products.find(x => x.id === item.id);
+        if (!p) { removed.push(item.name); return acc; }
+        const nextPrice = Number(p.price);
+        if (nextPrice !== Number(item.price)) priceChanged++;
+        acc.push({ ...item, price: nextPrice, image_url: p.image_url, back_image_url: p.back_image_url });
+        return acc;
+      }, []);
+      setCart(next);
+      if (toast) {
+        if (removed.length) toast(`${removed.length} item${removed.length>1?'s':''} removed — no longer available`, 'info');
+        else if (priceChanged) toast('Cart prices refreshed', 'success');
+      }
+    } catch {}
+  };
+
+  const ctx = { user, setUser, token, setToken, cart, cartTotal, cartCount, addToCart, updateQty, clearCart, setCartOpen, nav, logout, pageData, theme, toggleTheme, reconcileCart };
 
   return (
     <ToastProvider>
@@ -1377,7 +1402,8 @@ function ResetPasswordPage({ pageData, nav }) {
 }
 
 // ── ACCOUNT PAGE ──────────────────────────────────────────────────────────────
-function AccountPage({ user, setUser, setToken, nav }) {
+function AccountPage({ user, setUser, setToken, nav, reconcileCart }) {
+  const toast = useToast();
   const [mode, setMode] = React.useState('login'); // 'login' | 'register' | 'forgot'
   const [tab, setTab] = React.useState('orders');
   const [form, setForm] = React.useState({name:'',email:'',password:'',phone:''});
@@ -1406,6 +1432,7 @@ function AccountPage({ user, setUser, setToken, nav }) {
             const { token, user: u } = await api.post('/auth/google', { credential: response.credential });
             localStorage.setItem('dc_token', token);
             setToken(token); setUser(u);
+            if (reconcileCart) reconcileCart(toast);
           } catch (e) { setError(e.message); }
           finally { setLoading(false); }
         },
@@ -1441,6 +1468,7 @@ function AccountPage({ user, setUser, setToken, nav }) {
         const { token, user: u } = await api.post(endpoint, body);
         localStorage.setItem('dc_token', token);
         setToken(token); setUser(u);
+        if (reconcileCart) reconcileCart(toast);
       }
     } catch(e) { setError(e.message); }
     finally { setLoading(false); }
@@ -1666,6 +1694,45 @@ function AdminPage({ user, nav }) {
     } catch(e) { toast(e.message, 'error'); }
   };
 
+  const downloadBackup = async () => {
+    try {
+      const res = await fetch('/api/admin/backup', { headers: authHeaders() });
+      if (!res.ok) { toast('Backup failed','error'); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dead-concrete-backup-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      toast('Backup downloaded — keep it safe.', 'success');
+    } catch(e) { toast(e.message,'error'); }
+  };
+
+  const restoreInputRef = React.useRef(null);
+  const triggerRestore = () => restoreInputRef.current?.click();
+  const handleRestoreFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // reset so same file can be re-picked
+    if (!file) return;
+    if (!window.confirm(`Restore from "${file.name}"?\n\nThis will WIPE every product, order, review, quote and non-admin user, then re-insert from the backup file.\n\nMake a fresh backup first if you're unsure — this cannot be undone.`)) return;
+    try {
+      const text = await file.text();
+      const snapshot = JSON.parse(text);
+      if (!snapshot.tables) { toast('Invalid backup file','error'); return; }
+      const res = await fetch('/api/admin/restore', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(snapshot),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast(data.error||'Restore failed','error'); return; }
+      const counts = data.counts || {};
+      toast(`Restored ${counts.products||0} products, ${counts.orders||0} orders, ${counts.users||0} users.`, 'success');
+      load();
+    } catch(e) { toast(`Restore failed: ${e.message}`,'error'); }
+  };
+
   const addProduct = async () => {
     if (!newProd.name||!newProd.price) { toast('Name and price required','error'); return; }
     const fd = new FormData();
@@ -1719,9 +1786,12 @@ function AdminPage({ user, nav }) {
 
   return (
     <div style={{maxWidth:1200,margin:'0 auto',padding:'60px 20px'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:48}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:48,flexWrap:'wrap',gap:16}}>
         <div><span className="section-tag">ADMIN PANEL</span><h1 className="resp-h1" style={{fontWeight:900,fontSize:52,letterSpacing:-1}}>DASHBOARD</h1></div>
-        <div style={{display:'flex',gap:8}}>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <button className="btn btn-outline" title="Download a JSON snapshot of all data" onClick={downloadBackup} disabled={loading}>⬇ BACKUP</button>
+          <button className="btn btn-outline" title="Restore from a JSON snapshot file" style={{color:'#f39c12',borderColor:'#f39c12'}} onClick={triggerRestore} disabled={loading}>⬆ RESTORE</button>
+          <input ref={restoreInputRef} type="file" accept="application/json,.json" style={{display:'none'}} onChange={handleRestoreFile} />
           <button className="btn btn-outline" onClick={purgeDemo} disabled={loading}>{loading?<Spin/>:'Purge DEMO DATA'}</button>
           <button className="btn btn-outline" onClick={load} disabled={loading}>{loading?<Spin/>:'↺ REFRESH'}</button>
         </div>

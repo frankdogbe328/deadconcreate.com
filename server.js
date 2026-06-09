@@ -96,8 +96,19 @@ app.use('/api', rateLimit({
 // Stricter limit on auth routes
 app.use('/api/auth', rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many auth attempts, please wait 15 minutes.' },
+}));
+
+// Strict limit on payment routes — prevents brute-forcing of references
+app.use('/api/payments', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many payment attempts, please wait a moment.' },
 }));
 
 // ── STATIC FILES ──────────────────────────────────────────────────────────────

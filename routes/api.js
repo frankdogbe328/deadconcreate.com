@@ -225,8 +225,13 @@ router.put('/products/:id', requireAdmin, productImageUpload, (req, res) => {
 
 router.delete('/products/:id', requireAdmin, (req, res) => {
   const db = getDb();
-  try { db.prepare('UPDATE products SET in_stock=0 WHERE id=?').run(req.params.id); res.json({ success: true }); }
-  finally { db.close(); }
+  try {
+    const existing = db.prepare('SELECT id FROM products WHERE id=?').get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Product not found' });
+    db.prepare('DELETE FROM reviews WHERE product_id=?').run(req.params.id);
+    db.prepare('DELETE FROM products WHERE id=?').run(req.params.id);
+    res.json({ success: true });
+  } finally { db.close(); }
 });
 
 // ── PAYSTACK MOMO (automated — buyer approves in MoMo app) ───────────────────

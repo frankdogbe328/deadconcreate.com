@@ -190,6 +190,14 @@
 <script type="text/babel" data-presets="react">
 const API = '/api';
 
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function timeGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'GOOD MORNING';
+  if (h < 17) return 'GOOD AFTERNOON';
+  return 'GOOD EVENING';
+}
+
 // ── STATE MANAGEMENT (simple, no Redux) ───────────────────────────────────────
 function useLocalStorage(key, def) {
   const [v, setV] = React.useState(() => { try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; } });
@@ -324,7 +332,7 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const reset = params.get('reset');
     return reset ? { resetToken: reset } : {};
-  });8 
+  });
 
   const nav = (p, data={}) => { setPage(p); setPageData(data); setCartOpen(false); window.scrollTo(0,0); };
   const cartCount = cart.reduce((s,i) => s+i.qty, 0);
@@ -484,10 +492,10 @@ function CartDrawer({ cart, total, updateQty, onClose, onCheckout }) {
 }
 
 // ── HOME PAGE ─────────────────────────────────────────────────────────────────
-function HomePage({ nav, addToCart }) {
+function HomePage({ nav, addToCart, user }) {
   const [featured, setFeatured] = React.useState([]);
   const api = useApi();
-  React.useEffect(() => { api.get('/products').then(p => setFeatured(p.filter(x=>x.badge).slice(0,3))).catch(()=>{}); }, []);
+  React.useEffect(() => { if (user) api.get('/products').then(p => setFeatured(p.filter(x=>x.badge).slice(0,3))).catch(()=>{}); }, [user]);
   useReveal([featured.length]);
   const [n1, r1] = useCountUp(1200);
   const [n2, r2] = useCountUp(100);
@@ -500,6 +508,7 @@ function HomePage({ nav, addToCart }) {
         <div className="parallax-slow" style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px),repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(192,57,43,.03) 60px,rgba(192,57,43,.03) 61px)'}} />
         <div className="parallax-med" style={{position:'absolute',width:700,height:700,background:'radial-gradient(circle,rgba(192,57,43,.1) 0%,transparent 70%)',top:'50%',left:'50%',marginLeft:-350,marginTop:-350,animation:'breathe 6s ease-in-out infinite'}} />
         <div style={{textAlign:'center',position:'relative',zIndex:2,maxWidth:920}} className="fade-up">
+          {user&&<div style={{color:'#888',fontSize:11,letterSpacing:4,fontFamily:'Barlow',marginBottom:14,textTransform:'uppercase'}}>{timeGreeting()}, {user.name.split(' ')[0]}</div>}
           <div style={{display:'inline-block',background:'#c0392b',padding:'4px 18px',fontSize:10,fontWeight:900,letterSpacing:5,marginBottom:28}}>DEAD CONCRETE</div>
           <h1 className="hero-glow" style={{fontWeight:900,fontSize:'clamp(52px,11vw,115px)',lineHeight:.88,letterSpacing:-3,textTransform:'uppercase',marginBottom:28}}>GRIT<br/><span style={{color:'#c0392b',WebkitTextStroke:'2px #c0392b',WebkitTextFillColor:'transparent'}}>NEVER</span><br/>DIES.</h1>
           <p style={{color:'#888',fontSize:17,fontFamily:'Barlow',maxWidth:620,margin:'0 auto 20px',lineHeight:1.75}}>Streetwear born from resilience and ambition. Forged from the cracks of the concrete and built for those who refuse to quit.</p>
@@ -570,14 +579,27 @@ function HomePage({ nav, addToCart }) {
         </div>
       </section>
 
-      {/* ── FEATURED PRODUCTS ────────────────────────────────────────────────── */}
-      {featured.length>0&&<section style={{maxWidth:1200,margin:'0 auto',padding:'80px 20px'}}>
+      {/* ── FEATURED PRODUCTS (members-only) ─────────────────────────────────── */}
+      {user && featured.length>0 && <section style={{maxWidth:1200,margin:'0 auto',padding:'80px 20px'}}>
         <div className="reveal" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:48,flexWrap:'wrap',gap:16}}>
           <div><span className="section-tag">FEATURED DROPS</span><h2 style={{fontWeight:900,fontSize:48,letterSpacing:-1,lineHeight:1}}>FRESH OFF THE PRESS</h2></div>
           <button className="btn btn-outline" onClick={()=>nav('shop')}>VIEW ALL</button>
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:24}}>
           {featured.map((p,i)=><div key={p.id} className={`reveal d${(i%3)+1}`}><ProductCard product={p} onAdd={()=>addToCart(p)} onView={()=>nav('shop')} /></div>)}
+        </div>
+      </section>}
+
+      {/* ── JOIN THE FAMILY (guests only) ────────────────────────────────────── */}
+      {!user && <section style={{maxWidth:900,margin:'0 auto',padding:'80px 20px'}}>
+        <div className="card reveal" style={{padding:'56px 36px',textAlign:'center',background:'linear-gradient(135deg,#0d0d0d,#1a0606)',border:'1px solid #2a1414'}}>
+          <span className="section-tag">JOIN THE FAMILY</span>
+          <h2 style={{fontWeight:900,fontSize:'clamp(34px,5vw,52px)',letterSpacing:-1,lineHeight:1,marginBottom:20}}>SIGN IN<br/><span style={{color:'#c0392b'}}>TO SEE THE DROPS.</span></h2>
+          <p style={{color:'#888',fontFamily:'Barlow',fontSize:16,lineHeight:1.7,maxWidth:540,margin:'0 auto 32px'}}>Our catalogue lives behind the door. Create a free account or sign in to browse the drops, lock in your size, and place an order.</p>
+          <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+            <button className="btn btn-primary" style={{padding:'14px 32px'}} onClick={()=>nav('account')}>SIGN IN</button>
+            <button className="btn btn-outline" style={{padding:'14px 32px'}} onClick={()=>nav('account')}>CREATE ACCOUNT</button>
+          </div>
         </div>
       </section>}
 
@@ -676,7 +698,7 @@ function ProductDetailModal({ product, onClose, onAdd }) {
 }
 
 // ── SHOP PAGE ─────────────────────────────────────────────────────────────────
-function ShopPage({ addToCart }) {
+function ShopPage({ addToCart, user, nav }) {
   const [products, setProducts] = React.useState([]);
   const [filter, setFilter] = React.useState('all');
   const [loading, setLoading] = React.useState(true);
@@ -684,10 +706,28 @@ function ShopPage({ addToCart }) {
   const api = useApi();
 
   React.useEffect(() => {
+    if (!user) { setLoading(false); return; }
     setLoading(true);
     api.get(`/products${filter!=='all'?`?category=${filter}`:''}`)
       .then(setProducts).catch(()=>{}).finally(()=>setLoading(false));
-  }, [filter]);
+  }, [filter, user]);
+
+  if (!user) {
+    return (
+      <div style={{maxWidth:560,margin:'80px auto',padding:'40px 20px',textAlign:'center'}}>
+        <span className="section-tag">MEMBERS ONLY</span>
+        <h1 className="resp-h1" style={{fontWeight:900,fontSize:52,letterSpacing:-1,lineHeight:1,marginBottom:18}}>SIGN IN<br/>TO SHOP.</h1>
+        <p style={{color:'#888',fontFamily:'Barlow',fontSize:16,lineHeight:1.7,marginBottom:32}}>Dead Concrete drops are reserved for the family. Create a free account or sign in to browse the catalogue and place an order.</p>
+        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+          <button className="btn btn-primary" style={{padding:'14px 32px'}} onClick={()=>nav('account')}>SIGN IN</button>
+          <button className="btn btn-outline" style={{padding:'14px 32px'}} onClick={()=>nav('account')}>CREATE ACCOUNT</button>
+        </div>
+        <div style={{marginTop:36,padding:'18px 22px',border:'1px solid #1e1e1e',background:'#0d0d0d',fontFamily:'Barlow',fontSize:13,color:'#666'}}>
+          Already have an account? Your cart will follow you back here once you sign in.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{maxWidth:1200,margin:'0 auto',padding:'60px 20px'}}>
@@ -765,7 +805,21 @@ function ReviewsSection({ productId }) {
 }
 
 // ── CHECKOUT PAGE ─────────────────────────────────────────────────────────────
-function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
+function CheckoutPage(props) {
+  if (!props.user) {
+    return (
+      <div style={{maxWidth:560,margin:'80px auto',padding:'40px 20px',textAlign:'center'}}>
+        <span className="section-tag">SIGN IN REQUIRED</span>
+        <h1 className="resp-h1" style={{fontWeight:900,fontSize:46,letterSpacing:-1,lineHeight:1,marginBottom:18}}>ALMOST THERE.</h1>
+        <p style={{color:'#888',fontFamily:'Barlow',fontSize:16,lineHeight:1.7,marginBottom:32}}>Sign in to confirm your order. Your cart will follow you back.</p>
+        <button className="btn btn-primary" style={{padding:'14px 32px'}} onClick={()=>props.nav('account')}>SIGN IN TO CHECKOUT</button>
+      </div>
+    );
+  }
+  return <CheckoutInner {...props} />;
+}
+
+function CheckoutInner({ cart, cartTotal, clearCart, user, nav }) {
   const [step, setStep] = React.useState(1);
   const [orderId, setOrderId] = React.useState(null);
   const [payStatus, setPayStatus] = React.useState(''); // 'momo_pending' | 'bank_pending' | 'confirmed'
@@ -1442,7 +1496,7 @@ function AccountPage({ user, setUser, setToken, nav }) {
   return (
     <div style={{maxWidth:900,margin:'0 auto',padding:'60px 20px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:48,flexWrap:'wrap',gap:16}}>
-        <div><span className="section-tag">WELCOME BACK</span><h1 className="resp-account-h1 resp-h1" style={{fontWeight:900,fontSize:52,letterSpacing:-1}}>{user.name.toUpperCase()}</h1><div style={{color:'#555',fontFamily:'Barlow',marginTop:4}}>{user.email}</div></div>
+        <div><span className="section-tag">{timeGreeting()}</span><h1 className="resp-account-h1 resp-h1" style={{fontWeight:900,fontSize:52,letterSpacing:-1}}>{user.name.toUpperCase()}</h1><div style={{color:'#555',fontFamily:'Barlow',marginTop:4}}>{user.email}</div></div>
         <div style={{display:'flex',gap:10}}>
           {user.role==='admin'&&<button className="btn btn-outline" onClick={()=>nav('admin')}>ADMIN PANEL</button>}
         </div>
@@ -1648,6 +1702,17 @@ function AdminPage({ user, nav }) {
     } catch(e) { toast(e.message,'error'); }
   };
 
+  const deleteProduct = async (p) => {
+    if (!window.confirm(`Permanently delete "${p.name}"?\n\nThis removes the product and its reviews from the database. Past orders containing it will still show the product name in their history. This cannot be undone — use HIDE instead if you only want to take it off the shop temporarily.`)) return;
+    const second = window.prompt(`Type DELETE to confirm permanent removal of "${p.name}":`);
+    if (second !== 'DELETE') { toast('Delete cancelled','error'); return; }
+    try {
+      const res = await fetch(`/api/products/${p.id}`, { method:'DELETE', headers: authHeaders() });
+      if (!res.ok) { const d = await res.json(); toast(d.error||'Failed to delete','error'); return; }
+      load(); toast('Product deleted permanently','success');
+    } catch(e) { toast(e.message,'error'); }
+  };
+
   const TABS = [['dashboard','OVERVIEW'],['orders','ORDERS'],['products','PRODUCTS'],['quotes',`QUOTES${quotes.filter(q=>q.status==='new').length?` (${quotes.filter(q=>q.status==='new').length})`:''}`],['reviews',`REVIEWS${pending.length?` (${pending.length})`:''}`]];
 
   if (!user||user.role!=='admin') return null;
@@ -1790,9 +1855,10 @@ function AdminPage({ user, nav }) {
                 {p.badge&&<span style={{background:'#c0392b',padding:'2px 8px',fontSize:9,fontWeight:900}}>{p.badge}</span>}
                 <span style={{color:p.in_stock?'#27ae60':'#e74c3c',fontSize:11,fontWeight:700}}>{p.in_stock?'● IN STOCK':'○ HIDDEN'}</span>
               </div>
-              <div style={{display:'flex',gap:8}}>
-                <button className="btn btn-outline" style={{flex:1,padding:'7px 10px',fontSize:11}} onClick={()=>{setEditProd({...p});setEditProdImg(null);}}>EDIT</button>
-                <button className="btn btn-outline" style={{padding:'7px 14px',fontSize:11,borderColor:p.in_stock?'#e74c3c !important':'#27ae60 !important',color:p.in_stock?'#e74c3c':'#27ae60'}} onClick={()=>toggleStock(p)}>{p.in_stock?'HIDE':'SHOW'}</button>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <button className="btn btn-outline" style={{flex:'1 1 80px',padding:'7px 10px',fontSize:11}} onClick={()=>{setEditProd({...p});setEditProdImg(null);setEditProdBackImg(null);}}>EDIT</button>
+                <button className="btn btn-outline" style={{padding:'7px 12px',fontSize:11,color:p.in_stock?'#f39c12':'#27ae60',borderColor:p.in_stock?'#f39c12':'#27ae60'}} onClick={()=>toggleStock(p)}>{p.in_stock?'HIDE':'SHOW'}</button>
+                <button title="Permanently delete this product" style={{padding:'7px 12px',fontSize:11,background:'transparent',color:'#e74c3c',border:'1px solid #e74c3c',fontWeight:900,letterSpacing:1,cursor:'pointer'}} onClick={()=>deleteProduct(p)}>DELETE</button>
               </div>
             </div>
           </div>)}

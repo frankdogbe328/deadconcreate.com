@@ -21,6 +21,8 @@ db.exec(`
     google_id TEXT UNIQUE,
     reset_token TEXT,
     reset_token_expires_at TEXT,
+    email_verified INTEGER DEFAULT 0,
+    email_verification_token TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -32,6 +34,7 @@ db.exec(`
     image_url TEXT, back_image_url TEXT,
     in_stock INTEGER DEFAULT 1,
     sizes TEXT DEFAULT 'S,M,L,XL,XXL',
+    stock_by_size TEXT DEFAULT '{}',
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -83,6 +86,9 @@ migrate(`ALTER TABLE users ADD COLUMN reset_token TEXT`);
 migrate(`ALTER TABLE users ADD COLUMN reset_token_expires_at TEXT`);
 migrate(`ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT 'S,M,L,XL,XXL'`);
 migrate(`ALTER TABLE products ADD COLUMN back_image_url TEXT`);
+migrate(`ALTER TABLE products ADD COLUMN stock_by_size TEXT DEFAULT '{}'`);
+migrate(`ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0`);
+migrate(`ALTER TABLE users ADD COLUMN email_verification_token TEXT`);
 migrate(`ALTER TABLE order_items ADD COLUMN size TEXT`);
 
 // Wipe and reseed
@@ -103,8 +109,8 @@ if (adminPassword === 'admin123') {
   console.warn('⚠️  ADMIN_PASSWORD env var not set — using the public default "admin123". Rotate this on Render before going live.');
 }
 const adminHash = bcrypt.hashSync(adminPassword, 10);
-db.prepare(`INSERT INTO users (id,name,email,password_hash,role) VALUES (?,?,?,?,?)`)
-  .run(uuid(), 'Admin', adminEmail, adminHash, 'admin');
+db.prepare(`INSERT INTO users (id,name,email,password_hash,role,email_verified) VALUES (?,?,?,?,?,?)`)
+  .run(uuid(), 'Admin', adminEmail, adminHash, 'admin', 1);
 
 // Optional demo customer/account data (set SEED_DEMO=false to skip in production)
 const seedDemo = process.env.SEED_DEMO !== 'false';
@@ -112,29 +118,38 @@ let custId = null;
 if (seedDemo) {
   const custHash = bcrypt.hashSync('demo123', 10);
   custId = uuid();
-  db.prepare(`INSERT INTO users (id,name,email,password_hash,role) VALUES (?,?,?,?,?)`)
-    .run(custId, 'John Builder', 'john@example.com', custHash, 'customer');
+  db.prepare(`INSERT INTO users (id,name,email,password_hash,role,email_verified) VALUES (?,?,?,?,?,?)`)
+    .run(custId, 'John Builder', 'john@example.com', custHash, 'customer', 1);
 }
 
 // Products — images live in /uploads/products/
 // Each Resurrection tee has a FRONT (script logo) and BACK (rose graphic) view.
 const products = [
   // ── RESURRECTION COLLECTION (oversized heavyweight tees) ──
-  { name:'Resurrection Tee — Tan',   cat:'resurrection', price:230, desc:'Oversized heavyweight tee in sand tan. Chrome-gold "Dead Concrete" script logo on the front, skeleton-hand and rose graphic on the back.',  badge:'BESTSELLER', color:'#c19a6b', img:'/uploads/products/resurrection1.jpeg', back:'/uploads/products/resurrection4.jpeg' },
-  { name:'Resurrection Tee — White', cat:'resurrection', price:230, desc:'Oversized white heavyweight tee. Chrome-gold "Dead Concrete" script on the front, skeleton-hand and rose graphic across the back.',         badge:'NEW',        color:'#c0392b', img:'/uploads/products/resurrection3.jpeg', back:'/uploads/products/resurrection2.jpeg' },
-  { name:'Resurrection Tee — Black', cat:'resurrection', price:230, desc:'Oversized black heavyweight tee. Chrome-gold "Dead Concrete" script on the front, skeleton-hand and rose graphic on the back in blood red.', badge:'BESTSELLER', color:'#c0392b', img:'/uploads/products/resurrection6.jpeg', back:'/uploads/products/resurrection5.jpeg' },
+  { name:'Resurrection Tee — Tan',   cat:'resurrection', price:240, desc:'Oversized heavyweight tee in sand tan. Chrome-gold "Dead Concrete" script logo on the front, skeleton-hand and rose graphic on the back.',  badge:'BESTSELLER', color:'#c19a6b', img:'/uploads/products/resurrection1.jpeg', back:'/uploads/products/resurrection4.jpeg' },
+  { name:'Resurrection Tee — White', cat:'resurrection', price:240, desc:'Oversized white heavyweight tee. Chrome-gold "Dead Concrete" script on the front, skeleton-hand and rose graphic across the back.',         badge:'NEW',        color:'#c0392b', img:'/uploads/products/resurrection3.jpeg', back:'/uploads/products/resurrection2.jpeg' },
+  { name:'Resurrection Tee — Black', cat:'resurrection', price:240, desc:'Oversized black heavyweight tee. Chrome-gold "Dead Concrete" script on the front, skeleton-hand and rose graphic on the back in blood red.', badge:'BESTSELLER', color:'#c0392b', img:'/uploads/products/resurrection6.jpeg', back:'/uploads/products/resurrection5.jpeg' },
 
   // ── GIRLS' TANK TOPS COLLECTION (fitted raglan crop tees) ──
-  { name:'Girls Tank Top — Yellow Body', cat:'tops', price:150, desc:'Fitted raglan crop tee. Pastel yellow body with black sleeves and "Dead Concrete" varsity script.',                              badge:'NEW', color:'#f1c40f', img:'/uploads/products/standtops.jpeg',  back:null },
-  { name:'Girls Tank Top — Black Body',  cat:'tops', price:150, desc:'Fitted raglan crop tee. Black body with pastel yellow sleeves and chain-stitched "Dead Concrete" varsity script.',                badge:null,  color:'#111111', img:'/uploads/products/standtops1.jpeg', back:null },
+  { name:'Girls Tank Top — Yellow Body', cat:'tops', price:160, desc:'Fitted raglan crop tee. Pastel yellow body with black sleeves and "Dead Concrete" varsity script.',                              badge:'NEW', color:'#f1c40f', img:'/uploads/products/standtops.jpeg',  back:null },
+  { name:'Girls Tank Top — Black Body',  cat:'tops', price:160, desc:'Fitted raglan crop tee. Black body with pastel yellow sleeves and chain-stitched "Dead Concrete" varsity script.',                badge:null,  color:'#111111', img:'/uploads/products/standtops1.jpeg', back:null },
 ];
 
-const ins = db.prepare(`INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,back_image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?,?)`);
+const defaultStock = (sizesCsv) => {
+  // Reasonable starting stock — owner can tune in admin
+  const sizes = sizesCsv.split(',');
+  const presets = { XS: 6, S: 10, M: 14, L: 12, XL: 8, XXL: 4 };
+  const out = {};
+  for (const s of sizes) out[s] = presets[s] ?? 8;
+  return JSON.stringify(out);
+};
+
+const ins = db.prepare(`INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,back_image_url,sizes,stock_by_size) VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
 const productIds = [];
 for (const p of products) {
   const id = uuid();
   const sizes = p.cat === 'tops' ? 'XS,S,M,L' : 'S,M,L,XL,XXL';
-  ins.run(id, p.name, p.cat, p.price, p.desc, p.badge || null, p.color, p.img || null, p.back || null, sizes);
+  ins.run(id, p.name, p.cat, p.price, p.desc, p.badge || null, p.color, p.img || null, p.back || null, sizes, defaultStock(sizes));
   productIds.push({ id, ...p });
 }
 

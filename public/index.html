@@ -563,7 +563,6 @@ function HomePage({ nav, addToCart, user }) {
         <div style={{maxWidth:1140,margin:'0 auto',display:'grid',gridTemplateColumns:'1.1fr 1fr',gap:60,alignItems:'center',position:'relative'}}>
           <div className="reveal">
             <span className="section-tag">THE MANIFESTO</span>
-            <h2 style={{fontWeight:900,fontSize:'clamp(40px,5.5vw,68px)',letterSpacing:-1.5,lineHeight:.95,marginBottom:28}}>NOT A NAME.<br/><span className="shimmer-text">A MINDSET.</span></h2>
             <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:18}}>Dead Concrete is more than a name — it's a mindset. Concrete is the hardest surface we know, and even when it looks dead or broken, it still stands. My brand represents <strong style={{color:'#fff'}}>strength, survival, and growth through struggle.</strong></p>
             <p style={{color:'#aaa',fontFamily:'Barlow',fontSize:17,lineHeight:1.8,marginBottom:32}}>Just like plants break through concrete, I believe greatness can rise from the hardest places. Dead Concrete is for those who come from the streets, face the pressure, and still find a way to <em style={{color:'#c0392b',fontStyle:'normal',fontWeight:800}}>shine</em>.</p>
             <div style={{borderLeft:'3px solid #c0392b',paddingLeft:20}}>
@@ -648,6 +647,9 @@ function ProductCard({ product: p, onAdd, onView }) {
   const hasBack = !!p.back_image_url;
   const shownImg = flipped && hasBack ? p.back_image_url : p.image_url;
   const toggleFlip = (e) => { e.stopPropagation(); setFlipped(f=>!f); };
+  const stockMap = (() => { try { return JSON.parse(p.stock_by_size || '{}') || {}; } catch { return {}; } })();
+  const sizesArr = (p.sizes || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const allSoldOut = sizesArr.length > 0 && sizesArr.every(s => (stockMap[s] ?? 1) === 0);
   return (
     <div className="pc card" style={{overflow:'hidden'}}>
       <div style={{height:200,background:`linear-gradient(135deg,#1a1a1a,${c}22)`,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',borderBottom:`3px solid ${c}`,cursor:'pointer',overflow:'hidden'}} onClick={onView}>
@@ -655,7 +657,8 @@ function ProductCard({ product: p, onAdd, onView }) {
           ? <img key={shownImg} src={shownImg} alt={p.name} className="product-img" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',animation:'imgFadeIn .3s ease'}} onError={e=>{e.target.style.display='none';}} />
           : <div style={{fontSize:64}}>🧱</div>
         }
-        {p.badge&&<span style={{position:'absolute',top:12,left:12,background:c,padding:'3px 10px',fontSize:9,fontWeight:900,letterSpacing:1.5,zIndex:1}}>{p.badge}</span>}
+        {p.badge&&!allSoldOut&&<span style={{position:'absolute',top:12,left:12,background:c,padding:'3px 10px',fontSize:9,fontWeight:900,letterSpacing:1.5,zIndex:1}}>{p.badge}</span>}
+        {allSoldOut&&<span style={{position:'absolute',top:12,left:12,background:'#1a1a1a',color:'#e74c3c',border:'1px solid #e74c3c',padding:'3px 10px',fontSize:9,fontWeight:900,letterSpacing:2,zIndex:1}}>SOLD OUT</span>}
         <span style={{position:'absolute',top:12,right:12,background:'rgba(10,10,10,.85)',padding:'4px 12px',fontWeight:900,fontSize:15,zIndex:1}}>GHS {p.price}</span>
         {hasBack&&<button onClick={toggleFlip} title={flipped?'Show front':'Show back'} aria-label={flipped?'Show front':'Show back'} style={{position:'absolute',bottom:12,right:12,width:38,height:38,borderRadius:'50%',border:'1px solid rgba(255,255,255,.2)',background:'rgba(10,10,10,.85)',color:'#fff',fontWeight:900,fontSize:16,cursor:'pointer',zIndex:2,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)'}}>↻</button>}
         {hasBack&&<span style={{position:'absolute',bottom:14,left:12,background:'rgba(10,10,10,.7)',color:'#aaa',padding:'3px 8px',fontSize:8,fontWeight:900,letterSpacing:1.5,zIndex:1}}>{flipped?'BACK':'FRONT'}</span>}
@@ -673,14 +676,20 @@ function ProductCard({ product: p, onAdd, onView }) {
 // ── PRODUCT DETAIL MODAL (with size picker) ──────────────────────────────────
 function ProductDetailModal({ product, onClose, onAdd }) {
   const sizes = (product.sizes || '').split(',').map(s=>s.trim()).filter(Boolean);
-  const [size, setSize] = React.useState(sizes[0] || '');
+  const stockMap = (() => { try { return JSON.parse(product.stock_by_size || '{}') || {}; } catch { return {}; } })();
+  const stockFor = (s) => stockMap[s] ?? null; // null = unknown (legacy), 0 = sold out
+  const initialSize = sizes.find(s => (stockFor(s) ?? 1) > 0) || '';
+  const [size, setSize] = React.useState(initialSize);
   const [error, setError] = React.useState('');
   const [view, setView] = React.useState('front'); // 'front' | 'back'
   const hasBack = !!product.back_image_url;
   const currentImg = view === 'back' && hasBack ? product.back_image_url : product.image_url;
   const accent = product.accent_color || '#c0392b';
+  const selectedStock = size ? stockFor(size) : null;
+  const allSoldOut = sizes.length > 0 && sizes.every(s => (stockFor(s) ?? 1) === 0);
   const handleAdd = () => {
     if (sizes.length && !size) { setError('Pick a size first'); return; }
+    if (size && (stockFor(size) ?? 1) === 0) { setError('That size is sold out'); return; }
     onAdd(product, size || null);
   };
   return (
@@ -707,13 +716,23 @@ function ProductDetailModal({ product, onClose, onAdd }) {
             {sizes.length>0&&<div style={{marginBottom:20}}>
               <div className="label" style={{marginBottom:8}}>SELECT SIZE</div>
               <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-                {sizes.map(s=>(
-                  <button key={s} onClick={()=>{setSize(s);setError('');}} style={{minWidth:48,padding:'10px 14px',border:`2px solid ${size===s?'#c0392b':'#2a2a2a'}`,background:size===s?'#1a0606':'#0d0d0d',color:size===s?'#fff':'#888',fontWeight:900,fontSize:13,letterSpacing:1,cursor:'pointer',transition:'all .2s'}}>{s}</button>
-                ))}
+                {sizes.map(s=>{
+                  const stk = stockFor(s);
+                  const out = stk === 0;
+                  const low = stk !== null && stk > 0 && stk <= 3;
+                  return (
+                    <button key={s} onClick={()=>{ if(out) return; setSize(s); setError(''); }} disabled={out} title={out?`${s} — sold out`:stk!==null?`${stk} in stock`:''} style={{position:'relative',minWidth:48,padding:'10px 14px',border:`2px solid ${size===s?'#c0392b':out?'#1a1a1a':'#2a2a2a'}`,background:size===s?'#1a0606':'#0d0d0d',color:size===s?'#fff':out?'#3a3a3a':'#888',fontWeight:900,fontSize:13,letterSpacing:1,cursor:out?'not-allowed':'pointer',textDecoration:out?'line-through':'none',transition:'all .2s'}}>
+                      {s}
+                      {low&&<span style={{position:'absolute',top:-7,right:-6,background:'#f39c12',color:'#000',fontSize:8,padding:'1px 4px',fontWeight:900,letterSpacing:.5,borderRadius:2}}>{stk}</span>}
+                    </button>
+                  );
+                })}
               </div>
+              {selectedStock !== null && selectedStock > 0 && selectedStock <= 3 && <p style={{color:'#f39c12',fontFamily:'Barlow',fontSize:12,marginTop:8,fontWeight:700,letterSpacing:.5}}>Only {selectedStock} left in {size} — grab it.</p>}
+              {allSoldOut && <p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:12,marginTop:8,fontWeight:700,letterSpacing:.5}}>Every size is sold out for now. Restock incoming.</p>}
             </div>}
             {error&&<p style={{color:'#e74c3c',fontFamily:'Barlow',fontSize:13,marginBottom:12}}>{error}</p>}
-            <button className="btn btn-primary" style={{width:'100%',padding:'14px',fontSize:16}} onClick={handleAdd}>ADD TO CART{size?` · ${size}`:''}</button>
+            <button className="btn btn-primary" style={{width:'100%',padding:'14px',fontSize:16,opacity:allSoldOut?.5:1,cursor:allSoldOut?'not-allowed':'pointer'}} onClick={handleAdd} disabled={allSoldOut}>{allSoldOut?'SOLD OUT':`ADD TO CART${size?` · ${size}`:''}`}</button>
           </div>
         </div>
         <ReviewsSection productId={product.id} />
@@ -1253,15 +1272,16 @@ function CheckoutInner({ cart, cartTotal, clearCart, user, nav }) {
           </div>
           <div style={{borderTop:'1px solid #1e1e1e',paddingTop:14,fontFamily:'Barlow'}}>
             <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13,color:'#888'}}><span>Subtotal</span><span style={{color:'#fff',fontWeight:700}}>GHS {cartTotal.toFixed(2)}</span></div>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13,color:'#888'}}><span>Shipping</span><span style={{color:'#27ae60',fontWeight:800,letterSpacing:1}}>FREE</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13,color:'#888'}}><span>Delivery</span><span style={{color:'#f39c12',fontWeight:800,letterSpacing:1}}>PAID ON RECEIPT</span></div>
           </div>
           <div style={{borderTop:'2px solid #c0392b',paddingTop:14,marginTop:6,display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
             <span style={{fontWeight:900,fontSize:14,letterSpacing:1.5}}>TOTAL</span>
             <span style={{fontWeight:900,fontSize:24,color:'#c0392b'}}>GHS {cartTotal.toFixed(2)}</span>
           </div>
+          <div style={{fontSize:11,color:'#666',fontFamily:'Barlow',marginTop:6,lineHeight:1.5}}>Delivery fee is paid directly to the rider on receipt — not included in the total above.</div>
           <div className="co-trust">
             <span>🔒 Secure</span>
-            <span>📦 Free Ship</span>
+            <span>🛵 Pay on Delivery</span>
             <span>↩ 7-day Returns</span>
           </div>
         </div>
@@ -1631,6 +1651,35 @@ function ContactPage() {
 const STATUS_OPTIONS = ['Order Received','In Production','Quality Check','Shipped','Delivered','Cancelled'];
 const STATUS_COLORS = {'Order Received':'#3498db','In Production':'#e67e22','Quality Check':'#9b59b6','Shipped':'#1abc9c','Delivered':'#27ae60','Cancelled':'#e74c3c'};
 
+function SizeStockEditor({ sizes, value, onChange }) {
+  const sizesArr = (sizes || '').split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+  const parsed = (() => { try { return JSON.parse(value || '{}') || {}; } catch { return {}; } })();
+  const setOne = (s, raw) => {
+    const n = Math.max(0, parseInt(raw, 10) || 0);
+    onChange(JSON.stringify({ ...parsed, [s]: n }));
+  };
+  if (!sizesArr.length) return <div style={{color:'#555',fontFamily:'Barlow',fontSize:12}}>Set sizes first to edit per-size stock.</div>;
+  const total = sizesArr.reduce((s,sz) => s + (parsed[sz] || 0), 0);
+  return (
+    <div>
+      <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(sizesArr.length,6)},minmax(60px,1fr))`,gap:8}}>
+        {sizesArr.map(s => {
+          const v = parsed[s] || 0;
+          const low = v > 0 && v <= 3;
+          const out = v === 0;
+          return (
+            <div key={s} style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
+              <div style={{fontWeight:900,fontSize:11,letterSpacing:1.5,color:out?'#e74c3c':low?'#f39c12':'#888',marginBottom:4}}>{s}</div>
+              <input type="number" min="0" value={v} onChange={e=>setOne(s, e.target.value)} style={{width:'100%',textAlign:'center',padding:'8px 4px',background:'#0d0d0d',border:`1px solid ${out?'#e74c3c':low?'#f39c12':'#2a2a2a'}`,color:'#fff',fontWeight:900,fontSize:14}} />
+            </div>
+          );
+        })}
+      </div>
+      <div style={{fontSize:11,color:'#555',fontFamily:'Barlow',marginTop:6}}>Total stock: <strong style={{color:'#aaa'}}>{total}</strong> · 0 = sold out · 1–3 = low</div>
+    </div>
+  );
+}
+
 function AdminPage({ user, nav }) {
   const [tab, setTab] = React.useState('dashboard');
   const [stats, setStats] = React.useState(null);
@@ -1642,7 +1691,7 @@ function AdminPage({ user, nav }) {
   const [newStatus, setNewStatus] = React.useState('');
   const [statusNote, setStatusNote] = React.useState('');
   const [trackingNum, setTrackingNum] = React.useState('');
-  const [newProd, setNewProd] = React.useState({name:'',category:'resurrection',price:'',description:'',badge:'',sizes:'S,M,L,XL,XXL'});
+  const [newProd, setNewProd] = React.useState({name:'',category:'resurrection',price:'',description:'',badge:'',sizes:'S,M,L,XL,XXL',stock_by_size:'{"S":10,"M":12,"L":12,"XL":8,"XXL":4}'});
   const [newProdImg, setNewProdImg] = React.useState(null);
   const [newProdBackImg, setNewProdBackImg] = React.useState(null);
   const [editProd, setEditProd] = React.useState(null);
@@ -1749,7 +1798,7 @@ function AdminPage({ user, nav }) {
   const saveEditProduct = async () => {
     if (!editProd||!editProd.name||!editProd.price) { toast('Name and price required','error'); return; }
     const fd = new FormData();
-    ['name','category','price','description','badge','accent_color','in_stock','sizes'].forEach(k => { if (editProd[k]!==undefined&&editProd[k]!==null) fd.append(k, editProd[k]); });
+    ['name','category','price','description','badge','accent_color','in_stock','sizes','stock_by_size'].forEach(k => { if (editProd[k]!==undefined&&editProd[k]!==null) fd.append(k, editProd[k]); });
     if (editProdImg) fd.append('image', editProdImg);
     if (editProdBackImg) fd.append('back_image', editProdBackImg);
     try {
@@ -1870,6 +1919,10 @@ function AdminPage({ user, nav }) {
               <div style={{gridColumn:'1/-1'}}><label className="label">Description</label><input className="input" value={editProd.description||''} onChange={e=>setEditProd(p=>({...p,description:e.target.value}))} /></div>
               <div style={{gridColumn:'1/-1'}}><label className="label">Sizes (comma-separated)</label><input className="input" value={editProd.sizes||''} onChange={e=>setEditProd(p=>({...p,sizes:e.target.value}))} placeholder="e.g. S,M,L,XL,XXL" /></div>
               <div style={{gridColumn:'1/-1'}}>
+                <label className="label">Stock per Size</label>
+                <SizeStockEditor sizes={editProd.sizes||''} value={editProd.stock_by_size||'{}'} onChange={v => setEditProd(p => ({...p, stock_by_size: v}))} />
+              </div>
+              <div style={{gridColumn:'1/-1'}}>
                 <label className="label">Replace Front Image (optional)</label>
                 <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setEditProdImg(e.target.files[0]||null)} />
                 {editProd.image_url&&!editProdImg&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:10}}><img src={editProd.image_url} alt="" style={{width:60,height:60,objectFit:'cover',border:'1px solid #333'}} /><span style={{color:'#555',fontFamily:'Barlow',fontSize:12}}>Current front</span></div>}
@@ -1898,6 +1951,10 @@ function AdminPage({ user, nav }) {
             <div><label className="label">Category</label><select className="input" value={newProd.category} onChange={e=>setNewProd(p=>({...p,category:e.target.value}))}>{['resurrection','tops'].map(c=><option key={c}>{c}</option>)}</select></div>
             <div style={{gridColumn:'1/-1'}}><label className="label">Description</label><input className="input" value={newProd.description} onChange={e=>setNewProd(p=>({...p,description:e.target.value}))} /></div>
             <div style={{gridColumn:'1/-1'}}><label className="label">Sizes (comma-separated)</label><input className="input" value={newProd.sizes} onChange={e=>setNewProd(p=>({...p,sizes:e.target.value}))} placeholder="e.g. S,M,L,XL,XXL" /></div>
+            <div style={{gridColumn:'1/-1'}}>
+              <label className="label">Stock per Size</label>
+              <SizeStockEditor sizes={newProd.sizes} value={newProd.stock_by_size} onChange={v => setNewProd(p => ({...p, stock_by_size: v}))} />
+            </div>
             <div style={{gridColumn:'1/-1'}}>
               <label className="label">Front Image (optional)</label>
               <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setNewProdImg(e.target.files[0]||null)} />

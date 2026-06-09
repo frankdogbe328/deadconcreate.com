@@ -196,24 +196,43 @@ const cleanSizes = (raw) => {
   return String(raw).split(',').map(s => s.trim().toUpperCase()).filter(Boolean).join(',') || 'S,M,L,XL,XXL';
 };
 
+// Normalize a stock_by_size payload into a JSON string keyed by uppercased sizes with non-negative integer counts.
+const cleanStockBySize = (raw, sizesCsv) => {
+  let obj = {};
+  if (raw) {
+    try { obj = typeof raw === 'string' ? JSON.parse(raw) : raw; }
+    catch { obj = {}; }
+  }
+  const out = {};
+  for (const [k, v] of Object.entries(obj || {})) {
+    out[String(k).toUpperCase().trim()] = Math.max(0, parseInt(v, 10) || 0);
+  }
+  // Ensure every declared size has a key, defaulting to 0 if unspecified
+  for (const s of String(sizesCsv || '').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)) {
+    if (!(s in out)) out[s] = 0;
+  }
+  return JSON.stringify(out);
+};
+
 const productImageUpload = upload.fields([{ name: 'image', maxCount: 1 }, { name: 'back_image', maxCount: 1 }]);
 
 router.post('/products', requireAdmin, productImageUpload, (req, res) => {
-  const { name, category, price, description, badge, accent_color, sizes } = req.body;
+  const { name, category, price, description, badge, accent_color, sizes, stock_by_size } = req.body;
   if (!name || !category || !price) return res.status(400).json({ error: 'Name, category and price required' });
   const db = getDb();
   try {
     const id = uuid();
     const imageUrl = req.files?.image?.[0] ? `/uploads/products/${req.files.image[0].filename}` : null;
     const backImageUrl = req.files?.back_image?.[0] ? `/uploads/products/${req.files.back_image[0].filename}` : null;
-    db.prepare('INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,back_image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?,?)')
-      .run(id, name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', imageUrl, backImageUrl, cleanSizes(sizes));
+    const sz = cleanSizes(sizes);
+    db.prepare('INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,back_image_url,sizes,stock_by_size) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+      .run(id, name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', imageUrl, backImageUrl, sz, cleanStockBySize(stock_by_size, sz));
     res.status(201).json(db.prepare('SELECT * FROM products WHERE id=?').get(id));
   } finally { db.close(); }
 });
 
 router.put('/products/:id', requireAdmin, productImageUpload, (req, res) => {
-  const { name, category, price, description, badge, accent_color, in_stock, sizes } = req.body;
+  const { name, category, price, description, badge, accent_color, in_stock, sizes, stock_by_size } = req.body;
   const db = getDb();
   try {
     const existing = db.prepare('SELECT * FROM products WHERE id=?').get(req.params.id);
@@ -221,11 +240,37 @@ router.put('/products/:id', requireAdmin, productImageUpload, (req, res) => {
     const imageUrl = req.files?.image?.[0] ? `/uploads/products/${req.files.image[0].filename}` : existing.image_url;
     const backImageUrl = req.files?.back_image?.[0] ? `/uploads/products/${req.files.back_image[0].filename}` : existing.back_image_url;
     const sz = sizes !== undefined ? cleanSizes(sizes) : (existing.sizes || 'S,M,L,XL,XXL');
-    db.prepare("UPDATE products SET name=?,category=?,price=?,description=?,badge=?,accent_color=?,in_stock=?,image_url=?,back_image_url=?,sizes=?,updated_at=datetime('now') WHERE id=?")
-      .run(name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', in_stock ?? 1, imageUrl, backImageUrl, sz, req.params.id);
+    const stk = stock_by_size !== undefined ? cleanStockBySize(stock_by_size, sz) : (existing.stock_by_size || '{}');
+    db.prepare("UPDATE products SET name=?,category=?,price=?,description=?,badge=?,accent_color=?,in_stock=?,image_url=?,back_image_url=?,sizes=?,stock_by_size=?,updated_at=datetime('now') WHERE id=?")
+      .run(name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', in_stock ?? 1, imageUrl, backImageUrl, sz, stk, req.params.id);
     res.json(db.prepare('SELECT * FROM products WHERE id=?').get(req.params.id));
   } finally { db.close(); }
 });
+
+// ── Stock helpers (per-size) ─────────────────────────────────────────────────
+const parseStock = (raw) => { try { return JSON.parse(raw || '{}') || {}; } catch { return {}; } };
+const validateStockOrFail = (validated) => {
+  // Returns { ok:true } or { ok:false, error }
+  for (const v of validated) {
+    if (!v.size) continue;
+    const stock = parseStock(v.p.stock_by_size);
+    const have = stock[v.size] || 0;
+    if (have < v.quantity) return { ok: false, error: `Sold out: ${v.p.name} — size ${v.size} (${have} left)` };
+  }
+  return { ok: true };
+};
+const decrementStock = (db, validated) => {
+  // Decrement after fresh read so we don't write a stale snapshot back
+  const sel = db.prepare('SELECT stock_by_size FROM products WHERE id=?');
+  const upd = db.prepare('UPDATE products SET stock_by_size=? WHERE id=?');
+  for (const v of validated) {
+    if (!v.size) continue;
+    const fresh = sel.get(v.p.id);
+    const stock = parseStock(fresh?.stock_by_size);
+    stock[v.size] = Math.max(0, (stock[v.size] || 0) - v.quantity);
+    upd.run(JSON.stringify(stock), v.p.id);
+  }
+};
 
 router.delete('/products/:id', requireAdmin, (req, res) => {
   const db = getDb();
@@ -258,6 +303,9 @@ router.post('/payments/momo', async (req, res) => {
       validated.push({ p, quantity: item.quantity, t, size: item.size || null });
     }
 
+    const stockOk = validateStockOrFail(validated);
+    if (!stockOk.ok) return res.status(409).json({ error: stockOk.error });
+
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
     const userId = req.headers.authorization
       ? (() => { try { return jwt.verify(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET).id; } catch { return null; } })()
@@ -273,6 +321,8 @@ router.post('/payments/momo', async (req, res) => {
       db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price,size) VALUES (?,?,?,?,?,?,?,?)')
         .run(uuid(), orderId, p.id, p.name, quantity, p.price, t, size || null);
     }
+
+    decrementStock(db, validated);
 
     const chargeRes = await fetch('https://api.paystack.co/charge', {
       method: 'POST',
@@ -375,6 +425,9 @@ router.post('/payments/paystack', async (req, res) => {
       validated.push({ p, quantity: item.quantity, t, size: item.size || null });
     }
 
+    const stockOk = validateStockOrFail(validated);
+    if (!stockOk.ok) return res.status(409).json({ error: stockOk.error });
+
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
     const userId = req.headers.authorization
       ? (() => { try { return jwt.verify(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET).id; } catch { return null; } })()
@@ -390,6 +443,8 @@ router.post('/payments/paystack', async (req, res) => {
       db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price,size) VALUES (?,?,?,?,?,?,?,?)')
         .run(uuid(), orderId, p.id, p.name, quantity, p.price, t, size || null);
     }
+
+    decrementStock(db, validated);
 
     const chargeRes = await fetch('https://api.paystack.co/charge', {
       method: 'POST',
@@ -446,6 +501,9 @@ router.post('/payments/bank', async (req, res) => {
       validated.push({ p, quantity: item.quantity, t, size: item.size || null });
     }
 
+    const stockOk = validateStockOrFail(validated);
+    if (!stockOk.ok) return res.status(409).json({ error: stockOk.error });
+
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
     const userId = req.headers.authorization
       ? (() => { try { return jwt.verify(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET).id; } catch { return null; } })()
@@ -460,6 +518,8 @@ router.post('/payments/bank', async (req, res) => {
       db.prepare('INSERT INTO order_items (id,order_id,product_id,product_name,quantity,unit_price,total_price,size) VALUES (?,?,?,?,?,?,?,?)')
         .run(uuid(), orderId, p.id, p.name, quantity, p.price, t, size || null);
     }
+
+    decrementStock(db, validated);
 
     db.prepare('INSERT INTO order_status_history (id,order_id,status,note) VALUES (?,?,?,?)')
       .run(uuid(), orderId, 'Pending Payment', 'Bank transfer order placed');

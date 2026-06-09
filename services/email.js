@@ -31,6 +31,35 @@ async function send(to, subject, html) {
   }
 }
 
+export async function sendWelcomeEmail(user) {
+  const firstName = user.name?.split(' ')[0] || 'family';
+  const shopUrl = `${process.env.SITE_URL || ''}/shop`;
+  const html = `
+  <div style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;">
+    <div style="background:#c0392b;padding:3px 0;margin-bottom:32px;"></div>
+    <div style="font-size:11px;letter-spacing:4px;color:#888;margin-bottom:10px;">WELCOME TO THE FAMILY</div>
+    <h1 style="font-size:34px;font-weight:900;letter-spacing:-1px;line-height:1;margin:0 0 18px;">GRIT NEVER DIES,<br><span style="color:#c0392b;">${firstName.toUpperCase()}.</span></h1>
+    <p style="color:#aaa;margin:0 0 24px;line-height:1.7;">
+      You're in. Dead Concrete is more than a name — it's a mindset. Concrete is the hardest surface we know, and even when it looks dead or broken, it still stands. Streetwear born from resilience, hand-printed, built for those who refuse to quit.
+    </p>
+    <p style="color:#aaa;margin:0 0 32px;line-height:1.7;">
+      The catalogue is now open to you. Pick your size, lock it in, and we'll handle the rest.
+    </p>
+    ${shopUrl ? `<p style="margin:0 0 36px;"><a href="${shopUrl}" style="display:inline-block;background:#c0392b;color:#fff;text-decoration:none;padding:16px 32px;font-weight:900;letter-spacing:2px;font-size:14px;">SHOP THE DROP</a></p>` : ''}
+    <div style="border-left:3px solid #c0392b;padding:6px 0 6px 18px;margin:0 0 28px;">
+      <div style="font-size:11px;letter-spacing:3px;color:#888;margin-bottom:4px;">FOUNDER'S NOTE</div>
+      <div style="font-weight:800;color:#fff;line-height:1.5;">"Greatness rises from the hardest places."</div>
+    </div>
+    <p style="color:#666;font-size:13px;line-height:1.7;margin:0;">
+      Questions? Reply to this email or DM us on WhatsApp at <strong style="color:#fff;">+233 25 744 0091</strong>. We ship from Accra.
+    </p>
+    <div style="margin-top:40px;border-top:1px solid #1a1a1a;padding-top:20px;color:#333;font-size:11px;letter-spacing:3px;">
+      DEAD CONCRETE — RESURRECTION · TANK TOPS
+    </div>
+  </div>`;
+  await send(user.email, `Welcome to Dead Concrete, ${firstName}.`, html);
+}
+
 export async function sendPasswordResetEmail(user, resetUrl) {
   const html = `
   <div style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;">
@@ -50,7 +79,7 @@ export async function sendPasswordResetEmail(user, resetUrl) {
       <span style="color:#c0392b;">${resetUrl}</span>
     </p>
     <div style="margin-top:40px;border-top:1px solid #1a1a1a;padding-top:20px;color:#333;font-size:11px;letter-spacing:3px;">
-      DEAD CONCRETE — RESURRECTION · STAND TOPS
+      DEAD CONCRETE — RESURRECTION · TANK TOPS
     </div>
   </div>`;
   await send(user.email, 'Reset your Dead Concrete password', html);
@@ -111,7 +140,7 @@ export async function sendNewOrderAlert(order, items, paymentMethod = 'unknown')
       Open the admin panel to verify, update status, or reply: <a href="${process.env.SITE_URL || 'http://localhost:3000'}/?p=admin" style="color:#c0392b;">${process.env.SITE_URL || 'localhost:3000'}/admin</a>
     </p>
     <div style="margin-top:36px;border-top:1px solid #1a1a1a;padding-top:18px;color:#333;font-size:11px;letter-spacing:3px;">
-      DEAD CONCRETE — RESURRECTION · STAND TOPS
+      DEAD CONCRETE — RESURRECTION · TANK TOPS
     </div>
   </div>`;
   await send(process.env.ADMIN_EMAIL, `🧱 New Order ${order.id} — GHS ${order.total.toFixed(2)} · ${order.shipping_name || 'customer'}`, html);
@@ -152,7 +181,7 @@ export async function sendOrderConfirmation(order, items) {
       Track your order at <a href="${process.env.SITE_URL || 'http://localhost:3000'}" style="color:#c0392b;">deadconcrete.com</a> using order ID <strong>${order.id}</strong>
     </p>
     <div style="margin-top:40px;border-top:1px solid #1a1a1a;padding-top:20px;color:#333;font-size:11px;letter-spacing:3px;">
-      DEAD CONCRETE — RESURRECTION · STAND TOPS
+      DEAD CONCRETE — RESURRECTION · TANK TOPS
     </div>
   </div>`;
 

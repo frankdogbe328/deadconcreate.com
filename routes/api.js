@@ -7,7 +7,7 @@ import { v4 as uuid } from 'uuid';
 import { getDb } from '../db/db.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
-import { sendQuoteAlert, sendMomoAlert, sendOrderConfirmation, sendPasswordResetEmail, sendNewOrderAlert } from '../services/email.js';
+import { sendQuoteAlert, sendMomoAlert, sendOrderConfirmation, sendPasswordResetEmail, sendNewOrderAlert, sendWelcomeEmail } from '../services/email.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -44,6 +44,7 @@ router.post('/auth/register', async (req, res) => {
     db.prepare('INSERT INTO users (id,name,email,password_hash,phone) VALUES (?,?,?,?,?)').run(id, name, email, hash, phone || null);
     const user = db.prepare('SELECT id,name,email,role,phone FROM users WHERE id=?').get(id);
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    sendWelcomeEmail(user).catch(console.error);
     res.status(201).json({ token, user });
   } finally { db.close(); }
 });
@@ -156,6 +157,7 @@ router.post('/auth/google', async (req, res) => {
   const db = getDb();
   try {
     let user = db.prepare('SELECT * FROM users WHERE google_id=? OR email=?').get(googleId, email);
+    let isNew = false;
     if (user) {
       // Link google_id to an existing email/password account on first Google sign-in
       if (!user.google_id) {
@@ -166,10 +168,12 @@ router.post('/auth/google', async (req, res) => {
       const id = uuid();
       db.prepare('INSERT INTO users (id,name,email,google_id) VALUES (?,?,?,?)').run(id, name, email, googleId);
       user = db.prepare('SELECT * FROM users WHERE id=?').get(id);
+      isNew = true;
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const { password_hash, reset_token, reset_token_expires_at, ...safe } = user;
+    if (isNew) sendWelcomeEmail(safe).catch(console.error);
     res.json({ token, user: safe });
   } finally { db.close(); }
 });

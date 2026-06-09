@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuid } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const db = new Database(path.join(__dirname, '..', 'deadconcrete.db'));
@@ -94,10 +96,15 @@ db.exec(`
   DELETE FROM users;
 `);
 
-// Admin user
-const adminHash = bcrypt.hashSync('admin123', 10);
+// Admin user — password from env, with a loud warning if the default is still in use
+const adminEmail = process.env.ADMIN_LOGIN_EMAIL || 'admin@deadconcrete.com';
+const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+if (adminPassword === 'admin123') {
+  console.warn('⚠️  ADMIN_PASSWORD env var not set — using the public default "admin123". Rotate this on Render before going live.');
+}
+const adminHash = bcrypt.hashSync(adminPassword, 10);
 db.prepare(`INSERT INTO users (id,name,email,password_hash,role) VALUES (?,?,?,?,?)`)
-  .run(uuid(), 'Admin', 'admin@deadconcrete.com', adminHash, 'admin');
+  .run(uuid(), 'Admin', adminEmail, adminHash, 'admin');
 
 // Optional demo customer/account data (set SEED_DEMO=false to skip in production)
 const seedDemo = process.env.SEED_DEMO !== 'false';
@@ -150,7 +157,7 @@ if (seedDemo && custId) {
 
 db.close();
 console.log('✅ Database ready!');
-console.log('👤 Admin:    admin@deadconcrete.com / admin123');
+console.log(`👤 Admin:    ${adminEmail} / ${adminPassword === 'admin123' ? 'admin123 (DEFAULT — ROTATE!)' : '••••••• (from ADMIN_PASSWORD)'}`);
 if (seedDemo) {
   console.log('👤 Customer: john@example.com / demo123');
 } else {

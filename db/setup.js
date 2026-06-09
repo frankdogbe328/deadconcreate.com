@@ -27,7 +27,8 @@ db.exec(`
     category TEXT NOT NULL, price REAL NOT NULL,
     description TEXT, badge TEXT,
     accent_color TEXT DEFAULT '#c0392b',
-    image_url TEXT, in_stock INTEGER DEFAULT 1,
+    image_url TEXT, back_image_url TEXT,
+    in_stock INTEGER DEFAULT 1,
     sizes TEXT DEFAULT 'S,M,L,XL,XXL',
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
@@ -79,6 +80,7 @@ migrate(`ALTER TABLE users ADD COLUMN google_id TEXT`);
 migrate(`ALTER TABLE users ADD COLUMN reset_token TEXT`);
 migrate(`ALTER TABLE users ADD COLUMN reset_token_expires_at TEXT`);
 migrate(`ALTER TABLE products ADD COLUMN sizes TEXT DEFAULT 'S,M,L,XL,XXL'`);
+migrate(`ALTER TABLE products ADD COLUMN back_image_url TEXT`);
 migrate(`ALTER TABLE order_items ADD COLUMN size TEXT`);
 
 // Wipe and reseed
@@ -108,26 +110,24 @@ if (seedDemo) {
 }
 
 // Products — images live in /uploads/products/
+// Each Resurrection tee has a FRONT (script logo) and BACK (rose graphic) view.
 const products = [
   // ── RESURRECTION COLLECTION (oversized heavyweight tees) ──
-  { name:'Resurrection Tee — Tan / Script',  cat:'resurrection', price:230, desc:'Oversized heavyweight tee in sand tan with chrome-gold "Dead Concrete" script logo printed across the back.',                                                  badge:'BESTSELLER', color:'#c19a6b', img:'/uploads/products/resurrection1.jpeg' },
-  { name:'Resurrection Tee — White / Rose',  cat:'resurrection', price:230, desc:'Oversized white tee with full-back skeleton-hand and rose graphic. Gothic "Dead Concrete" wordmark, hand-screened.',                                            badge:'NEW',        color:'#c0392b', img:'/uploads/products/resurrection2.jpeg' },
-  { name:'Resurrection Tee — White / Script',cat:'resurrection', price:230, desc:'Oversized white heavyweight tee with chrome-gold "Dead Concrete" script back print.',                                                                          badge:null,         color:'#e67e22', img:'/uploads/products/resurrection3.jpeg' },
-  { name:'Resurrection Tee — Tan / Rose',    cat:'resurrection', price:230, desc:'Oversized sand tan tee with skeleton-hand, rose and gothic Dead Concrete wordmark across the back.',                                                            badge:'LIMITED',    color:'#c19a6b', img:'/uploads/products/resurrection4.jpeg' },
-  { name:'Resurrection Tee — Black / Rose',  cat:'resurrection', price:230, desc:'Oversized black tee with full-back skeleton-hand and rose graphic. Gothic Dead Concrete wordmark in blood red.',                                                badge:'BESTSELLER', color:'#c0392b', img:'/uploads/products/resurrection5.jpeg' },
-  { name:'Resurrection Tee — Black / Script',cat:'resurrection', price:230, desc:'Oversized black heavyweight tee with chrome-gold "Dead Concrete" script back print.',                                                                          badge:null,         color:'#f39c12', img:'/uploads/products/resurrection6.jpeg' },
+  { name:'Resurrection Tee — Tan',   cat:'resurrection', price:230, desc:'Oversized heavyweight tee in sand tan. Chrome-gold "Dead Concrete" script logo on the front, skeleton-hand and rose graphic on the back.',  badge:'BESTSELLER', color:'#c19a6b', img:'/uploads/products/resurrection1.jpeg', back:'/uploads/products/resurrection4.jpeg' },
+  { name:'Resurrection Tee — White', cat:'resurrection', price:230, desc:'Oversized white heavyweight tee. Chrome-gold "Dead Concrete" script on the front, skeleton-hand and rose graphic across the back.',         badge:'NEW',        color:'#c0392b', img:'/uploads/products/resurrection3.jpeg', back:'/uploads/products/resurrection2.jpeg' },
+  { name:'Resurrection Tee — Black', cat:'resurrection', price:230, desc:'Oversized black heavyweight tee. Chrome-gold "Dead Concrete" script on the front, skeleton-hand and rose graphic on the back in blood red.', badge:'BESTSELLER', color:'#c0392b', img:'/uploads/products/resurrection6.jpeg', back:'/uploads/products/resurrection5.jpeg' },
 
-  // ── GIRLS' STAND TOPS COLLECTION (fitted raglan crop tees) ──
-  { name:'Girls Stand Top — Yellow Body',    cat:'tops',         price:150, desc:'Fitted raglan crop tee. Pastel yellow body with black sleeves and "Dead Concrete" varsity script.',                                                              badge:'NEW',        color:'#f1c40f', img:'/uploads/products/standtops.jpeg' },
-  { name:'Girls Stand Top — Black Body',     cat:'tops',         price:150, desc:'Fitted raglan crop tee. Black body with pastel yellow sleeves and chain-stitched "Dead Concrete" varsity script.',                                              badge:null,         color:'#111111', img:'/uploads/products/standtops1.jpeg' },
+  // ── GIRLS' TANK TOPS COLLECTION (fitted raglan crop tees) ──
+  { name:'Girls Tank Top — Yellow Body', cat:'tops', price:150, desc:'Fitted raglan crop tee. Pastel yellow body with black sleeves and "Dead Concrete" varsity script.',                              badge:'NEW', color:'#f1c40f', img:'/uploads/products/standtops.jpeg',  back:null },
+  { name:'Girls Tank Top — Black Body',  cat:'tops', price:150, desc:'Fitted raglan crop tee. Black body with pastel yellow sleeves and chain-stitched "Dead Concrete" varsity script.',                badge:null,  color:'#111111', img:'/uploads/products/standtops1.jpeg', back:null },
 ];
 
-const ins = db.prepare(`INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?)`);
+const ins = db.prepare(`INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,back_image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?,?)`);
 const productIds = [];
 for (const p of products) {
   const id = uuid();
   const sizes = p.cat === 'tops' ? 'XS,S,M,L' : 'S,M,L,XL,XXL';
-  ins.run(id, p.name, p.cat, p.price, p.desc, p.badge || null, p.color, p.img || null, sizes);
+  ins.run(id, p.name, p.cat, p.price, p.desc, p.badge || null, p.color, p.img || null, p.back || null, sizes);
   productIds.push({ id, ...p });
 }
 

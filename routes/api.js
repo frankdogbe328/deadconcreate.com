@@ -192,29 +192,33 @@ const cleanSizes = (raw) => {
   return String(raw).split(',').map(s => s.trim().toUpperCase()).filter(Boolean).join(',') || 'S,M,L,XL,XXL';
 };
 
-router.post('/products', requireAdmin, upload.single('image'), (req, res) => {
+const productImageUpload = upload.fields([{ name: 'image', maxCount: 1 }, { name: 'back_image', maxCount: 1 }]);
+
+router.post('/products', requireAdmin, productImageUpload, (req, res) => {
   const { name, category, price, description, badge, accent_color, sizes } = req.body;
   if (!name || !category || !price) return res.status(400).json({ error: 'Name, category and price required' });
   const db = getDb();
   try {
     const id = uuid();
-    const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : null;
-    db.prepare('INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?)')
-      .run(id, name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', imageUrl, cleanSizes(sizes));
+    const imageUrl = req.files?.image?.[0] ? `/uploads/products/${req.files.image[0].filename}` : null;
+    const backImageUrl = req.files?.back_image?.[0] ? `/uploads/products/${req.files.back_image[0].filename}` : null;
+    db.prepare('INSERT INTO products (id,name,category,price,description,badge,accent_color,image_url,back_image_url,sizes) VALUES (?,?,?,?,?,?,?,?,?,?)')
+      .run(id, name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', imageUrl, backImageUrl, cleanSizes(sizes));
     res.status(201).json(db.prepare('SELECT * FROM products WHERE id=?').get(id));
   } finally { db.close(); }
 });
 
-router.put('/products/:id', requireAdmin, upload.single('image'), (req, res) => {
+router.put('/products/:id', requireAdmin, productImageUpload, (req, res) => {
   const { name, category, price, description, badge, accent_color, in_stock, sizes } = req.body;
   const db = getDb();
   try {
     const existing = db.prepare('SELECT * FROM products WHERE id=?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Product not found' });
-    const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : existing.image_url;
+    const imageUrl = req.files?.image?.[0] ? `/uploads/products/${req.files.image[0].filename}` : existing.image_url;
+    const backImageUrl = req.files?.back_image?.[0] ? `/uploads/products/${req.files.back_image[0].filename}` : existing.back_image_url;
     const sz = sizes !== undefined ? cleanSizes(sizes) : (existing.sizes || 'S,M,L,XL,XXL');
-    db.prepare("UPDATE products SET name=?,category=?,price=?,description=?,badge=?,accent_color=?,in_stock=?,image_url=?,sizes=?,updated_at=datetime('now') WHERE id=?")
-      .run(name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', in_stock ?? 1, imageUrl, sz, req.params.id);
+    db.prepare("UPDATE products SET name=?,category=?,price=?,description=?,badge=?,accent_color=?,in_stock=?,image_url=?,back_image_url=?,sizes=?,updated_at=datetime('now') WHERE id=?")
+      .run(name, category, parseFloat(price), description || null, badge || null, accent_color || '#c0392b', in_stock ?? 1, imageUrl, backImageUrl, sz, req.params.id);
     res.json(db.prepare('SELECT * FROM products WHERE id=?').get(req.params.id));
   } finally { db.close(); }
 });

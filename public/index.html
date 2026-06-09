@@ -597,15 +597,21 @@ function HomePage({ nav, addToCart }) {
 // ── PRODUCT CARD ──────────────────────────────────────────────────────────────
 function ProductCard({ product: p, onAdd, onView }) {
   const c = p.accent_color||'#c0392b';
+  const [flipped, setFlipped] = React.useState(false);
+  const hasBack = !!p.back_image_url;
+  const shownImg = flipped && hasBack ? p.back_image_url : p.image_url;
+  const toggleFlip = (e) => { e.stopPropagation(); setFlipped(f=>!f); };
   return (
     <div className="pc card" style={{overflow:'hidden'}}>
       <div style={{height:200,background:`linear-gradient(135deg,#1a1a1a,${c}22)`,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',borderBottom:`3px solid ${c}`,cursor:'pointer',overflow:'hidden'}} onClick={onView}>
-        {p.image_url
-          ? <img src={p.image_url} alt={p.name} className="product-img" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} />
+        {shownImg
+          ? <img key={shownImg} src={shownImg} alt={p.name} className="product-img" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',animation:'imgFadeIn .3s ease'}} onError={e=>{e.target.style.display='none';}} />
           : <div style={{fontSize:64}}>🧱</div>
         }
         {p.badge&&<span style={{position:'absolute',top:12,left:12,background:c,padding:'3px 10px',fontSize:9,fontWeight:900,letterSpacing:1.5,zIndex:1}}>{p.badge}</span>}
         <span style={{position:'absolute',top:12,right:12,background:'rgba(10,10,10,.85)',padding:'4px 12px',fontWeight:900,fontSize:15,zIndex:1}}>GHS {p.price}</span>
+        {hasBack&&<button onClick={toggleFlip} title={flipped?'Show front':'Show back'} aria-label={flipped?'Show front':'Show back'} style={{position:'absolute',bottom:12,right:12,width:38,height:38,borderRadius:'50%',border:'1px solid rgba(255,255,255,.2)',background:'rgba(10,10,10,.85)',color:'#fff',fontWeight:900,fontSize:16,cursor:'pointer',zIndex:2,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)'}}>↻</button>}
+        {hasBack&&<span style={{position:'absolute',bottom:14,left:12,background:'rgba(10,10,10,.7)',color:'#aaa',padding:'3px 8px',fontSize:8,fontWeight:900,letterSpacing:1.5,zIndex:1}}>{flipped?'BACK':'FRONT'}</span>}
       </div>
       <div style={{padding:24}}>
         <div style={{fontSize:10,color:'#555',letterSpacing:3,textTransform:'uppercase',marginBottom:6}}>{p.category}</div>
@@ -622,6 +628,10 @@ function ProductDetailModal({ product, onClose, onAdd }) {
   const sizes = (product.sizes || '').split(',').map(s=>s.trim()).filter(Boolean);
   const [size, setSize] = React.useState(sizes[0] || '');
   const [error, setError] = React.useState('');
+  const [view, setView] = React.useState('front'); // 'front' | 'back'
+  const hasBack = !!product.back_image_url;
+  const currentImg = view === 'back' && hasBack ? product.back_image_url : product.image_url;
+  const accent = product.accent_color || '#c0392b';
   const handleAdd = () => {
     if (sizes.length && !size) { setError('Pick a size first'); return; }
     onAdd(product, size || null);
@@ -632,8 +642,15 @@ function ProductDetailModal({ product, onClose, onAdd }) {
       <div className="resp-modal" style={{position:'fixed',top:'5vh',left:'50%',transform:'translateX(-50%)',width:'90vw',maxWidth:700,maxHeight:'90vh',overflowY:'auto',background:'#111',border:'1px solid #1e1e1e',zIndex:301,padding:40}}>
         <button onClick={onClose} className="btn btn-ghost" style={{position:'absolute',top:16,right:16,fontSize:20}}>✕</button>
         <div className="resp-2col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:32,marginBottom:32}}>
-          <div style={{background:`${product.accent_color||'#c0392b'}15`,borderBottom:`3px solid ${product.accent_color||'#c0392b'}`,display:'flex',alignItems:'center',justifyContent:'center',minHeight:240,fontSize:80,overflow:'hidden',position:'relative'}}>
-            {product.image_url ? <img src={product.image_url} alt={product.name} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} /> : '🧱'}
+          <div>
+            <div style={{background:`${accent}15`,borderBottom:`3px solid ${accent}`,display:'flex',alignItems:'center',justifyContent:'center',minHeight:240,fontSize:80,overflow:'hidden',position:'relative'}}>
+              {currentImg ? <img key={currentImg} src={currentImg} alt={`${product.name} ${view}`} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',animation:'imgFadeIn .3s ease'}} onError={e=>{e.target.style.display='none';}} /> : '🧱'}
+              {hasBack&&<span style={{position:'absolute',top:10,left:10,background:'rgba(10,10,10,.85)',color:'#fff',padding:'4px 10px',fontSize:9,fontWeight:900,letterSpacing:2,zIndex:1}}>{view.toUpperCase()}</span>}
+            </div>
+            {hasBack&&<div style={{display:'flex',gap:8,marginTop:12}}>
+              <button onClick={()=>setView('front')} style={{flex:1,padding:'10px',border:`2px solid ${view==='front'?accent:'#2a2a2a'}`,background:view==='front'?`${accent}22`:'#0d0d0d',color:view==='front'?'#fff':'#888',fontWeight:900,fontSize:11,letterSpacing:2,cursor:'pointer',transition:'all .2s'}}>FRONT</button>
+              <button onClick={()=>setView('back')} style={{flex:1,padding:'10px',border:`2px solid ${view==='back'?accent:'#2a2a2a'}`,background:view==='back'?`${accent}22`:'#0d0d0d',color:view==='back'?'#fff':'#888',fontWeight:900,fontSize:11,letterSpacing:2,cursor:'pointer',transition:'all .2s'}}>BACK</button>
+            </div>}
           </div>
           <div>
             <div style={{fontSize:10,color:'#555',letterSpacing:3,textTransform:'uppercase',marginBottom:6}}>{product.category}</div>
@@ -677,7 +694,7 @@ function ShopPage({ addToCart }) {
       <span className="section-tag">OUR CATALOGUE</span>
       <h1 className="resp-h1" style={{fontWeight:900,fontSize:64,letterSpacing:-2,lineHeight:1,marginBottom:48}}>ALL PRODUCTS</h1>
       <div style={{display:'flex',gap:8,marginBottom:48,flexWrap:'wrap'}}>
-        {[['all','ALL'],['resurrection','RESURRECTION'],['tops','STAND TOPS']].map(([f,label])=><button key={f} onClick={()=>setFilter(f)} className="btn" style={{padding:'10px 24px',background:filter===f?'#c0392b':'transparent',color:'#fff',border:`2px solid ${filter===f?'#c0392b':'#333'}`}}>{label}</button>)}
+        {[['all','ALL'],['resurrection','RESURRECTION'],['tops','TANK TOPS']].map(([f,label])=><button key={f} onClick={()=>setFilter(f)} className="btn" style={{padding:'10px 24px',background:filter===f?'#c0392b':'transparent',color:'#fff',border:`2px solid ${filter===f?'#c0392b':'#333'}`}}>{label}</button>)}
       </div>
       {loading ? <div style={{textAlign:'center',padding:'80px 0'}}><div className="spinner" style={{margin:'0 auto',width:40,height:40,borderWidth:3}} /></div>
         : <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:24}}>
@@ -855,7 +872,7 @@ function CheckoutPage({ cart, cartTotal, clearCart, user, nav }) {
     <div style={{maxWidth:600,margin:'100px auto',padding:'40px 20px',textAlign:'center'}} className="fade-up">
       <div style={{fontSize:64,marginBottom:20,opacity:.5}}>🛒</div>
       <h2 style={{fontWeight:900,fontSize:40,letterSpacing:-1,marginBottom:12}}>NOTHING IN YOUR CART</h2>
-      <p style={{color:'#666',fontFamily:'Barlow',marginBottom:28,fontSize:15}}>Add a Resurrection tee or Stand Top first — then come back to check out.</p>
+      <p style={{color:'#666',fontFamily:'Barlow',marginBottom:28,fontSize:15}}>Add a Resurrection tee or Tank Top first — then come back to check out.</p>
       <button className="btn btn-primary" style={{padding:'14px 36px'}} onClick={()=>nav('shop')}>BROWSE PRODUCTS →</button>
     </div>
   );
@@ -1545,8 +1562,10 @@ function AdminPage({ user, nav }) {
   const [trackingNum, setTrackingNum] = React.useState('');
   const [newProd, setNewProd] = React.useState({name:'',category:'resurrection',price:'',description:'',badge:'',sizes:'S,M,L,XL,XXL'});
   const [newProdImg, setNewProdImg] = React.useState(null);
+  const [newProdBackImg, setNewProdBackImg] = React.useState(null);
   const [editProd, setEditProd] = React.useState(null);
   const [editProdImg, setEditProdImg] = React.useState(null);
+  const [editProdBackImg, setEditProdBackImg] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const api = useApi();
   const toast = useToast();
@@ -1598,10 +1617,11 @@ function AdminPage({ user, nav }) {
     const fd = new FormData();
     Object.entries({...newProd, price: parseFloat(newProd.price)}).forEach(([k,v]) => { if (v!==''&&v!=null) fd.append(k,v); });
     if (newProdImg) fd.append('image', newProdImg);
+    if (newProdBackImg) fd.append('back_image', newProdBackImg);
     try {
       const res = await fetch('/api/products', { method:'POST', headers: authHeaders(), body: fd });
       if (!res.ok) { const d = await res.json(); toast(d.error||'Failed','error'); return; }
-      setNewProd({name:'',category:'tops',price:'',description:'',badge:''}); setNewProdImg(null); load(); toast('Product added','success');
+      setNewProd({name:'',category:'tops',price:'',description:'',badge:'',sizes:'S,M,L,XL,XXL'}); setNewProdImg(null); setNewProdBackImg(null); load(); toast('Product added','success');
     } catch(e) { toast(e.message,'error'); }
   };
 
@@ -1610,10 +1630,11 @@ function AdminPage({ user, nav }) {
     const fd = new FormData();
     ['name','category','price','description','badge','accent_color','in_stock','sizes'].forEach(k => { if (editProd[k]!==undefined&&editProd[k]!==null) fd.append(k, editProd[k]); });
     if (editProdImg) fd.append('image', editProdImg);
+    if (editProdBackImg) fd.append('back_image', editProdBackImg);
     try {
       const res = await fetch(`/api/products/${editProd.id}`, { method:'PUT', headers: authHeaders(), body: fd });
       if (!res.ok) { const d = await res.json(); toast(d.error||'Failed','error'); return; }
-      setEditProd(null); setEditProdImg(null); load(); toast('Product updated','success');
+      setEditProd(null); setEditProdImg(null); setEditProdBackImg(null); load(); toast('Product updated','success');
     } catch(e) { toast(e.message,'error'); }
   };
 
@@ -1714,13 +1735,19 @@ function AdminPage({ user, nav }) {
               <div style={{gridColumn:'1/-1'}}><label className="label">Description</label><input className="input" value={editProd.description||''} onChange={e=>setEditProd(p=>({...p,description:e.target.value}))} /></div>
               <div style={{gridColumn:'1/-1'}}><label className="label">Sizes (comma-separated)</label><input className="input" value={editProd.sizes||''} onChange={e=>setEditProd(p=>({...p,sizes:e.target.value}))} placeholder="e.g. S,M,L,XL,XXL" /></div>
               <div style={{gridColumn:'1/-1'}}>
-                <label className="label">Replace Image (optional)</label>
+                <label className="label">Replace Front Image (optional)</label>
                 <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setEditProdImg(e.target.files[0]||null)} />
-                {editProd.image_url&&!editProdImg&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:10}}><img src={editProd.image_url} alt="" style={{width:60,height:60,objectFit:'cover',border:'1px solid #333'}} /><span style={{color:'#555',fontFamily:'Barlow',fontSize:12}}>Current image</span></div>}
+                {editProd.image_url&&!editProdImg&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:10}}><img src={editProd.image_url} alt="" style={{width:60,height:60,objectFit:'cover',border:'1px solid #333'}} /><span style={{color:'#555',fontFamily:'Barlow',fontSize:12}}>Current front</span></div>}
+              </div>
+              <div style={{gridColumn:'1/-1'}}>
+                <label className="label">Replace Back Image (optional)</label>
+                <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setEditProdBackImg(e.target.files[0]||null)} />
+                {editProd.back_image_url&&!editProdBackImg&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:10}}><img src={editProd.back_image_url} alt="" style={{width:60,height:60,objectFit:'cover',border:'1px solid #333'}} /><span style={{color:'#555',fontFamily:'Barlow',fontSize:12}}>Current back</span></div>}
+                {!editProd.back_image_url&&!editProdBackImg&&<div style={{marginTop:6,color:'#555',fontFamily:'Barlow',fontSize:12}}>No back image set — upload to enable FRONT/BACK toggle on the shop.</div>}
               </div>
             </div>
             <div style={{display:'flex',gap:12,marginTop:24}}>
-              <button className="btn btn-outline" onClick={()=>{setEditProd(null);setEditProdImg(null);}}>CANCEL</button>
+              <button className="btn btn-outline" onClick={()=>{setEditProd(null);setEditProdImg(null);setEditProdBackImg(null);}}>CANCEL</button>
               <button className="btn btn-primary" style={{flex:1}} onClick={saveEditProduct}>SAVE CHANGES</button>
             </div>
           </div>
@@ -1737,8 +1764,13 @@ function AdminPage({ user, nav }) {
             <div style={{gridColumn:'1/-1'}}><label className="label">Description</label><input className="input" value={newProd.description} onChange={e=>setNewProd(p=>({...p,description:e.target.value}))} /></div>
             <div style={{gridColumn:'1/-1'}}><label className="label">Sizes (comma-separated)</label><input className="input" value={newProd.sizes} onChange={e=>setNewProd(p=>({...p,sizes:e.target.value}))} placeholder="e.g. S,M,L,XL,XXL" /></div>
             <div style={{gridColumn:'1/-1'}}>
-              <label className="label">Product Image (optional)</label>
+              <label className="label">Front Image (optional)</label>
               <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setNewProdImg(e.target.files[0]||null)} />
+            </div>
+            <div style={{gridColumn:'1/-1'}}>
+              <label className="label">Back Image (optional)</label>
+              <input type="file" accept="image/*" className="input" style={{padding:'8px 12px',cursor:'pointer'}} onChange={e=>setNewProdBackImg(e.target.files[0]||null)} />
+              <div style={{marginTop:6,color:'#555',fontFamily:'Barlow',fontSize:12}}>Upload a back image to give buyers a FRONT/BACK flip toggle on the shop.</div>
             </div>
           </div>
           <button className="btn btn-primary" style={{marginTop:24,padding:'12px 32px'}} onClick={addProduct}>+ ADD PRODUCT</button>
